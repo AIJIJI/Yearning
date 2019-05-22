@@ -191,40 +191,56 @@ class userinfo(baseview.BaseView):
             return HttpResponse(status=500)
 
 
-class ldapauth(baseview.AnyLogin):
-    '''
 
-    ldap用户认证
-
-    '''
+class login_auth(baseview.AnyLogin):
 
     def post(self, request, args: str = None):
-        try:
-            username = request.data['username']
-            password = request.data['password']
-        except KeyError as e:
-            CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-        else:
-            valite = util.auth(username=username, password=password)
-            if valite:
-                user = Account.objects.filter(username=username).first()
-                if user is not None:
-                    user.set_password(util.workId())
-                    user.save()
-                    payload = jwt_payload_handler(user)
-                    token = jwt_encode_handler(payload)
-                    return Response({'token': token, 'res': '', 'permissions': user.group})
-                else:
-                    permissions = Account.objects.create_user(
-                        username=username,
-                        password=util.workId(),
-                        is_staff=0,
-                        group='guest')
-                    permissions.save()
-                    token = jwt_encode_handler(jwt_payload_handler(permissions))
-                    return Response({'token': token, 'res': '', 'permissions': 'guest'})
+        '''
+        普通登录类型认证
+        :return: jwt token
+        '''
+
+        user = request.data.get('username')
+        if user == 'admin':
+            try:
+                password = request.data['password']
+            except KeyError as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
             else:
-                return HttpResponse(status=401)
+                permissions = authenticate(username=user, password=password)
+                if permissions is not None and permissions.is_active:
+                    token = jwt_encode_handler(jwt_payload_handler(permissions))
+                    return Response(
+                        {'token': token, 'res': '', 'permissions': permissions.group, 'real_name': permissions.real_name})
+                else:
+                    return HttpResponse(status=400)
+        else:
+            try:
+                username = request.data['username']
+                password = request.data['password']
+            except KeyError as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+            else:
+                valite = util.auth(username=username, password=password)
+                if valite:
+                    user = Account.objects.filter(username=username).first()
+                    if user is not None:
+                        user.set_password(util.workId())
+                        user.save()
+                        payload = jwt_payload_handler(user)
+                        token = jwt_encode_handler(payload)
+                        return Response({'token': token, 'res': '', 'permissions': user.group})
+                    else:
+                        permissions = Account.objects.create_user(
+                            username=username,
+                            password=util.workId(),
+                            is_staff=0,
+                            group='guest')
+                        permissions.save()
+                        token = jwt_encode_handler(jwt_payload_handler(permissions))
+                        return Response({'token': token, 'res': '', 'permissions': 'guest'})
+                else:
+                    return HttpResponse(status=401)
 
 
 class login_register(baseview.AnyLogin):
@@ -255,25 +271,3 @@ class login_register(baseview.AnyLogin):
                 return HttpResponse('用户名已存在，请使用其他用户名注册！')
 
 
-class login_auth(baseview.AnyLogin):
-
-    def post(self, request, args: str = None):
-
-        '''
-        普通登录类型认证
-        :return: jwt token
-        '''
-
-        try:
-            user = request.data['username']
-            password = request.data['password']
-        except KeyError as e:
-            CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-        else:
-            permissions = authenticate(username=user, password=password)
-            if permissions is not None and permissions.is_active:
-                token = jwt_encode_handler(jwt_payload_handler(permissions))
-                return Response(
-                    {'token': token, 'res': '', 'permissions': permissions.group, 'real_name': permissions.real_name})
-            else:
-                return HttpResponse(status=400)

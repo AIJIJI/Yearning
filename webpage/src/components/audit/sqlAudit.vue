@@ -63,7 +63,7 @@
                   title="您确认删除这些工单信息吗?"
                   @on-ok="delrecordData"
                 >
-                  <Button type="warning">删除记录</Button>
+                  <!-- <Button type="warning">删除记录</Button> -->
                 </Poptip>
               </FormItem>
               <FormItem>

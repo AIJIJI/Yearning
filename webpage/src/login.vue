@@ -22,8 +22,8 @@
       </div>
       <br>
       <Card>
-        <Tabs value="custom" style="max-height: 300px;">
-          <TabPane label="普通登录" name="custom">
+        <!-- <Tabs value="custom" style="max-height: 300px;"> -->
+          <!-- <TabPane label="登录" name="custom"> -->
             <Form ref="formInline" :model="formInline" :rules="ruleInline" inline>
               <Form-item prop="user" style="width: 100%">
                 <Input v-model="formInline.user" placeholder="Username" autofocus></Input>
@@ -39,9 +39,9 @@
                 <p style="margin-left: 5%;margin-top: 5%">2018 © Power By Cookie.Ye 使用chrome获得最佳体验</p>
               </Form-item>
             </Form>
-          </TabPane>
+          <!-- </TabPane> -->
           <!--自己添加-->
-          <TabPane label="LDAP登录" name="ldap">
+          <!-- <TabPane label="LDAP登录" name="ldap">
             <Form ref="formInline" :model="formInline" :rules="ruleInline" inline>
               <Form-item prop="user" style="width: 100%">
                 <Input v-model="formInline.user" placeholder="ldap_Username"></Input>
@@ -55,7 +55,7 @@
                 <p style="margin-left: 5%;margin-top: 5%">2018 © Power By Cookie.Ye 使用chrome获得最佳体验</p>
               </Form-item>
             </Form>
-          </TabPane>
+          </TabPane> -->
           <!--自己添加-->
           <Modal
             v-model="register"
@@ -90,7 +90,7 @@
               </Form-item>
             </Form>
           </Modal>
-        </Tabs>
+        <!-- </Tabs> -->
       </Card>
     </div>
   </div>
@@ -240,31 +240,31 @@
           .catch(err => {
             this.$config.auth_notice(err)
           })
-      },
-      ldap_login () {
-        axios.post(`${this.$config.url}/ldapauth`, {
-          'username': this.formInline.user,
-          'password': this.formInline.password
-        })
-          .then(res => {
-            axios.defaults.headers.common['Authorization'] = 'JWT ' + res.data['token']
-            sessionStorage.setItem('user', this.formInline.user)
-            sessionStorage.setItem('jwt', `JWT ${res.data['token']}`)
-            sessionStorage.setItem('auth', res.data['permissions'])
-            let auth = res.data['permissions']
-            if (auth === 'admin' || auth === 'perform') {
-              sessionStorage.setItem('access', 0)
-            } else {
-              sessionStorage.setItem('access', 1)
-            }
-            this.$router.push({
-              name: 'home_index'
-            })
-          })
-          .catch(err => {
-            this.$config.auth_notice(err)
-          })
       }
+      // ldap_login () {
+      //   axios.post(`${this.$config.url}/ldapauth`, {
+      //     'username': this.formInline.user,
+      //     'password': this.formInline.password
+      //   })
+      //     .then(res => {
+      //       axios.defaults.headers.common['Authorization'] = 'JWT ' + res.data['token']
+      //       sessionStorage.setItem('user', this.formInline.user)
+      //       sessionStorage.setItem('jwt', `JWT ${res.data['token']}`)
+      //       sessionStorage.setItem('auth', res.data['permissions'])
+      //       let auth = res.data['permissions']
+      //       if (auth === 'admin' || auth === 'perform') {
+      //         sessionStorage.setItem('access', 0)
+      //       } else {
+      //         sessionStorage.setItem('access', 1)
+      //       }
+      //       this.$router.push({
+      //         name: 'home_index'
+      //       })
+      //     })
+      //     .catch(err => {
+      //       this.$config.auth_notice(err)
+      //     })
+      // }
     },
     mounted () {
       window.particlesJS.load('band', '/static/particlesjs-config.json')

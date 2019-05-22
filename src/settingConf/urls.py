@@ -8,7 +8,7 @@ from rest_framework.urlpatterns import format_suffix_patterns
 
 from core.api.user import (
     userinfo,
-    ldapauth,
+    # ldapauth,
     login_auth,
     login_register
 )
@@ -61,7 +61,7 @@ urlpatterns = [
     url(r'^api/v1/dingding', dingding.as_view()),
     url(r'^api/v1/detail', order_detail.as_view()),
     url(r'^api/v1/search', search.as_view()),
-    url(r'^api/v1/ldapauth', ldapauth.as_view()),
+    # url(r'^api/v1/ldapauth', ldapauth.as_view()),
     url(r'^api/v1/undoOrder', del_order.as_view()),
     url(r'^api/v1/osc/(.*)', osc_step.as_view()),
     url(r'^api-token-auth/', login_auth.as_view()),

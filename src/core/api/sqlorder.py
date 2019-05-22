@@ -6,6 +6,7 @@ from libs import call_inception
 from core.task import submit_push_messages
 from rest_framework.response import Response
 from django.http import HttpResponse
+from django.conf import settings
 from core.models import (
     DatabaseList,
     SqlOrder
@@ -43,6 +44,19 @@ class sqlorder(baseview.BaseView):
                     return HttpResponse(status=500)
 
         elif args == 'test':
+            if settings.DEBUG:
+                return Response({'result':  [
+                    {
+                        'ID': 1,
+                        'stage': 0,
+                        'errlevel': 0,
+                        'stagestatus': 0,
+                        'errormessage': 0,
+                        'sql': 1,
+                        'affected_rows': 1,
+                        'SQLSHA1': 1
+                    }
+                ], 'status': 200})
             try:
                 id = request.data['id']
                 base = request.data['base']
