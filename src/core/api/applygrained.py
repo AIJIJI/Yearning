@@ -46,8 +46,9 @@ class audit_grained(baseview.SuperUserpermissions):
                 return HttpResponse(status=500)
             else:
                 with transaction.atomic():
-                    Account.objects.filter(username=user).update(
-                        auth_group=auth_group)
+                    user = Account.objects.filter(username=user).get()
+                    # groups = set(user.auth_group.split(',')) | set(auth_group.split(','))
+                    user.update(auth_group=auth_group)
                     applygrained.objects.filter(
                         work_id=work_id).update(status=1)
                 mail = Account.objects.filter(username=user).first()

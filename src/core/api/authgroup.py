@@ -17,6 +17,7 @@ class auth_group(baseview.BaseView):
     @isAdmin
     def get(self, request, args: str = None):
         if args == 'all':
+            name = request.GET.get('name_like', '')
             try:
                 page = request.GET.get('page')
             except KeyError as e:
@@ -24,10 +25,11 @@ class auth_group(baseview.BaseView):
                 return HttpResponse(status=500)
             else:
                 try:
-                    page_number = grained.objects.count()
+                    filtered = grained.objects.all().filter(username__icontains=name)
+                    page_number = filtered.count()
                     start = int(page) * 10 - 10
                     end = int(page) * 10
-                    queryset = grained.objects.order_by('-id').all()[start:end]
+                    queryset = filtered.order_by('-id').all()[start:end]
                     ser = []
                     for i in queryset:
                         ser.append(

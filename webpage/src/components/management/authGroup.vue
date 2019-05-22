@@ -6,6 +6,9 @@
           <Button type="primary" icon="md-people" @click="createModel">添加权限组</Button>
           <br>
           <br/>
+          <Input v-model="query.name" placeholder="请填写组名" style="width: 20%" clearable></Input>
+          <Button @click="queryData" type="primary">查询</Button>
+          <Button @click="queryCancel" type="warning">重置</Button>
           <Table border :columns="columns" :data="data6" stripe height="550"></Table>
         </div>
         <br>
@@ -246,7 +249,11 @@
         addAuthGroupForm: {
           groupname: ''
         },
-        addAuthGroupModal: false
+        addAuthGroupModal: false,
+        query: {
+          name: '',
+          value: false
+        }
       }
     },
     methods: {
@@ -296,7 +303,11 @@
         this.addAuthGroupModal = false
       },
       refreshgroup (vl = 1) {
-        axios.get(`${this.$config.url}/authgroup/all?page=${vl}`)
+        let url = `${this.$config.url}/authgroup/all?page=${vl}`
+        if (this.query.name) {
+          url += `&name_like=${this.query.name}`
+        }
+        axios.get(url)
           .then(res => {
             this.data6 = res.data.data
             this.pagenumber = parseInt(res.data.page)
@@ -343,6 +354,14 @@
       deleteAuth (vl) {
         this.deluserModal = true
         this.authgroup = vl.username
+      },
+      queryData () {
+        this.query.valve = true
+        this.refreshgroup()
+      },
+      queryCancel () {
+        this.$config.clearObj(this.query)
+        this.refreshgroup()
       }
     },
     mounted () {
