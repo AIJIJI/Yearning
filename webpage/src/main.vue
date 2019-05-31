@@ -28,7 +28,6 @@
           </div>
         </div>
         <div class="header-avator-con">
-          <a href="http://order.yingyingwork.com/db-order/workorder/new">切换到 Oracla</a>
           <Modal v-model="getc" title="捐助Yearning" width="640">
             <h3>让Yearning持续提供更好的功能与服务。</h3>
             <br>

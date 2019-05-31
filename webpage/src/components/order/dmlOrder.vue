@@ -10,7 +10,7 @@
         <Card>
           <p slot="title">
             <Icon type="ios-redo"></Icon>
-            选择数据库
+            选择数据库 <a href="http://order.yingyingwork.com/db-order/workorder/new">选择 Oracle</a>
           </p>
           <div class="edittable-test-con">
             <div id="showImage" class="margin-bottom-10">
@@ -138,7 +138,7 @@
         validate_gen: true,
         formItem: {
           textarea: '',
-          computer_room: '',
+          computer_room: '上海机房',
           connection_name: '',
           basename: '',
           text: '',

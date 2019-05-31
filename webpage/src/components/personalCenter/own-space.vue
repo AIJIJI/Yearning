@@ -28,8 +28,8 @@
         <FormItem label="邮箱：">
           <span>{{ userForm.email }}</span>
         </FormItem>
-          <Button type="warning" size="small" @click="editPasswordModal=true">修改密码</Button>
-          <Button type="primary" size="small" @click="openMailChange">修改邮箱/真实姓名</Button>
+          <!-- <Button type="warning" size="small" @click="editPasswordModal=true">修改密码</Button>
+          <Button type="primary" size="small" @click="openMailChange">修改邮箱/真实姓名</Button> -->
           <Button type="success" size="small" @click="openPerChange">查看/申请权限</Button>
       </Form>
     </div>

@@ -13,7 +13,7 @@
               title="您确认删除这些工单信息吗?"
               @on-ok="delrecordData"
             >
-              <Button type="text" style="margin-left: -1%">删除记录</Button>
+              <!-- <Button type="text" style="margin-left: -1%">删除记录</Button> -->
             </Poptip>
             <Table border :columns="permissoncolums" :data="permissondata" stripe ref="selection"
                    @on-selection-change="delrecordList"></Table>

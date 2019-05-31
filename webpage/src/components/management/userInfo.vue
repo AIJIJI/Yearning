@@ -123,9 +123,11 @@
           <multiselect
             v-model="editAuthForm.authgroup" :options="groupset" :multiple="true"
             :close-on-select="false" :clear-on-select="false" :preserve-search="true"
-            placeholder="请选择" @close="getGroupList"
+            placeholder="请选择" @close="getGroupList" @select="getGroupListAfterSelect" @remove="getGroupListAfterRemove" 
           >
+          
           <!-- <multiselect
+           @close="getGroupList"
             v-model="editAuthForm.authgroup" :options="groupset" 
           > -->
             <template slot="singleLabel" slot-scope="option">
@@ -452,10 +454,37 @@
             this.$config.err_notice(this, error)
           })
       },
+      getGroupListAfterSelect (option) {
+        axios.put(`${this.$config.url}/authgroup/group_list`, {'group_list': JSON.stringify([...this.editAuthForm.authgroup, option])})
+          .then(res => {
+            this.permission_list = res.data.permissions
+            this.formItem = this.$config.mode(res.data.permissions)
+          })
+          .catch(error => {
+            this.$config.err_notice(this, error)
+          })
+      },
+      getGroupListAfterRemove (option) {
+        const lst = []
+        this.editAuthForm.authgroup.forEach((value, index) => {
+          if (value !== option) {
+            lst.push(value)
+          }
+        })
+        axios.put(`${this.$config.url}/authgroup/group_list`, {'group_list': JSON.stringify(lst)})
+          .then(res => {
+            this.permission_list = res.data.permissions
+            this.formItem = this.$config.mode(res.data.permissions)
+          })
+          .catch(error => {
+            this.$config.err_notice(this, error)
+          })
+      },
       getAuthGroup () {
         axios.get(`${this.$config.url}/authgroup/group_name`)
           .then(res => {
             this.groupset = res.data.authgroup
+            this.getGroupList()
           })
           .catch(error => {
             this.$config.err_notice(this, error)
@@ -473,6 +502,7 @@
         } else {
           this.editAuthForm.authgroup = []
         }
+        this.getGroupList()
       },
       editEmailModal (row) {
         this.email.modal = true

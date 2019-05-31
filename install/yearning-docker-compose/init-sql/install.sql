@@ -283,7 +283,6 @@ CREATE TABLE `django_migrations` (
 ) ENGINE=InnoDB AUTO_INCREMENT=55 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 
 
-
 BEGIN;
 INSERT INTO `core_grained` VALUES (29, 'admin', '{\'ddl\': \'0\', \'ddlcon\': [], \'dml\': \'0\', \'dmlcon\': [], \'dic\': \'0\', \'diccon\': [], \'dicedit\': \'0\', \'user\': \'1\', \'base\': \'1\', \'dicexport\': \'0\', \'person\': [], \'query\': \'0\', \'querycon\': []}');
 INSERT INTO `core_globalpermissions` VALUES (2, 'global', '{\'host\': \'\', \'port\': \'\', \'user\': \'\', \'password\': \'\', \'back_host\': \'\', \'back_port\': \'\', \'back_user\': \'\', \'back_password\': \'\'}', '{\'type\': \'1\', \'host\': \'\', \'sc\': \'\', \'domain\': \'\', \'user\': \'\', \'password\': \'\'}', '{\'webhook\': \'\', \'smtp_host\': \'\', \'smtp_port\': \'\', \'user\': \'\', \'password\': \'\', \'to_user\': \'\', \'mail\': False, \'ding\': False, \'ssl\': False}', '{\'limit\': \'\', \'con_room\': [\'AWS\', \'Aliyun\', \'Own\', \'Other\'], \'foce\': \'\', \'multi\': False, \'query\': False, \'sensitive_list\': [], \'sensitive\': \'\', \'exclued_db_list\': [], \'exclued_db\': \'\', \'email_suffix_list\': [], \'email_suffix\': \'\'}');
