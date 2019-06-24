@@ -7,7 +7,6 @@ Some tool sets
 cookie
 
 '''
-
 import json
 import random
 import ssl
@@ -18,6 +17,7 @@ from urllib import request
 from collections import namedtuple
 from ldap3 import Server, Connection, SUBTREE, ALL
 from libs import con_database
+
 
 _conf = configparser.ConfigParser()
 _conf.read('deploy.conf')
@@ -91,7 +91,7 @@ class LDAPConnection(object):
                                raise_exceptions=False)
 
     def __enter__(self):
-        self.conn.bind()
+        self.conn.bind(read_server_info=False)
         return self.conn
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -100,13 +100,14 @@ class LDAPConnection(object):
 
 def test_auth(url, user, password):
     with LDAPConnection(url, user, password) as conn:
-        if conn.bind():
+        if conn.bind(read_server_info=False):
             return True
     return False
 
 
 def auth(username, password):
     un_init = init_conf()
+
     ldap = ast.literal_eval(un_init['ldap'])
 
     LDAP_TYPE = ldap['type']
@@ -120,7 +121,6 @@ def auth(username, password):
         search_filter = '(cn={})'.format(username)
 
     with LDAPConnection(ldap['url'], ldap['user'], ldap['password']) as conn:
-
         res = conn.search(
             search_base=LDAP_SCBASE,
             search_filter=search_filter,
@@ -131,7 +131,7 @@ def auth(username, password):
             entry = conn.response[0]
             # check password by dn
             try:
-                if conn.rebind(user=entry['dn'], password=password):
+                if conn.rebind(user=entry['dn'], password=password, read_server_info=False):
                     attr_dict = entry['attributes']
                     print((True, attr_dict["mail"], attr_dict["cn"], attr_dict["uid"]))
                     return True

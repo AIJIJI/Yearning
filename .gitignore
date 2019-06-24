@@ -5,6 +5,7 @@ __pycache__/
 .vscode/
 .idea/
 .gitignore
+dist/
 
 # C extensions
 *.so

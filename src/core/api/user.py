@@ -199,7 +199,7 @@ class login_auth(baseview.AnyLogin):
         普通登录类型认证
         :return: jwt token
         '''
-
+        #
         user = request.data.get('username')
         if user == 'admin':
             try:
