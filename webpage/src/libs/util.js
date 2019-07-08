@@ -90,6 +90,18 @@ util.showThisRoute = function (itAccess, currentAccess) {
   }
 }
 
+util.openMultiplePage = function (vm, name, window) {
+  console.log({ vm, name, window })
+  const tag = `${name}-${window}`
+  vm.$router.push({
+    name: name,
+    params: { window: window }
+  })
+  vm.$store.commit('Breadcrumbset', tag)
+  vm.$store.state.currentPageName = tag
+  util.taglist(vm, name, window)
+}
+
 util.openPage = function (vm, name) {
   vm.$router.push({name: name})
   vm.$store.commit('Breadcrumbset', name)
@@ -97,16 +109,16 @@ util.openPage = function (vm, name) {
   util.taglist(vm, name)
 }
 
-util.taglist = function (vm, name) {
+util.taglist = function (vm, name, window) {
   vm.$store.state.pageOpenedList.forEach((vl, index) => {
-    if (vl.name === name && name !== 'home_index') {
+    if (vl.name === name && vl.window === window && name !== 'home_index') {
       vm.$store.state.pageOpenedList.splice(index, 1)
     }
   })
   appRouter.forEach((val) => {
     for (let i of val.children) {
       if (i.name === name && name !== 'home_index') {
-        vm.$store.state.pageOpenedList.push({'title': i.title, 'name': i.name})
+        vm.$store.state.pageOpenedList.push({'title': i.title, 'name': i.name, window: window})
       }
     }
   })

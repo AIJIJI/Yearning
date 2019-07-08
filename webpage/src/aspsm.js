@@ -25,6 +25,7 @@ const store = new Vuex.Store({
       MainRoute, ...appRouter
     ],
     currentPageName: 'home_index',
+    currentPageWindow: 0,
     currentPath: [{
       title: '首页',
       path: '/',

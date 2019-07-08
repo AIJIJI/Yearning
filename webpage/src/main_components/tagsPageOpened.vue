@@ -19,10 +19,15 @@
     </div>
     <div>
       <transition-group name="taglist-moving-animation">
-        <Tag type="dot" v-for="item in pageTagsList" :key="item.name" :name="item.name" @on-close="closePage"
-             @click.native="linkTo(item.name, item.title)" :closable="item.name==='home_index'?false:true"
-             :color="item.children?(item.children[0].name===currentPageName?'primary':'default'):(item.name===currentPageName?'primary':'default')">
-          {{ item.title }}
+        <Tag
+          v-for="item in pageTagsList" :key="item.name+item.window||''" :name="item.name+'-'+item.window"
+          type="dot"
+          :closable="item.name==='home_index'?false:true"
+          :color="item.children?(item.children[0].name===currentPageName?'primary':'default'):(item.name===currentPageName && item.window==currentPageWindow?'primary':'default')"
+          @on-close="closePage"
+          @click.native="linkTo(item.name, item.title, item.window)"
+        >
+          {{ item.window ? item.title + '-' + item.window : item.title }}
         </Tag>
       </transition-group>
     </div>
@@ -30,16 +35,26 @@
 </template>
 
 <script>
+  /*
+    interface IPageTag {
+      title: string
+      path: string
+      name: string
+      window?: number
+    }
+  */
   export default {
     name: 'tagsPageOpened',
     data () {
+      console.log(this.$route)
       return {
         currentPageName: this.$route.name,
+        currentPageWindow: this.$route.params.window,
         tagBodyLeft: 0
       }
     },
     props: {
-      pageTagsList: Array
+      pageTagsList: Array  // IPageTag[]
     },
     computed: {
       title () {
@@ -63,12 +78,18 @@
           this.$store.state.currentPageName = lastPageName
         }
       },
-      linkTo (name) {
+      linkTo (name, title, window) {
+        console.log()
+        console.log({ name, title, window, pageList: this.pageTagsList, currentPageWindow: this.currentPageWindow, currentPageName: this.currentPageName })
         this.$router.push({
-          name: name
+          name: name,
+          params: {
+            window: window
+          }
         })
         this.$store.commit('Breadcrumbset', name)
         this.$store.state.currentPageName = name
+        this.$store.state.currentPageWindow = window
       },
       handleTagsOption (type) {
         if (type === 'clearAll') {
@@ -85,6 +106,7 @@
     watch: {
       '$route' (to) {
         this.currentPageName = to.name
+        this.currentPageWindow = to.params.window
       }
     }
   }

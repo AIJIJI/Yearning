@@ -99,7 +99,7 @@ export const appRouter = [{
     title: '工单提交',
     component: Index,
     children: [{
-        path: 'ddledit',
+        path: 'ddledit/:window',
         name: 'ddledit',
         title: 'DDL',
         icon: 'md-git-merge',

@@ -61,6 +61,7 @@
     },
     data () {
       return {
+        current_ddl_count: 1,
         filtermenulist: {
           'ddledit': '',
           'dmledit': '',
@@ -86,12 +87,16 @@
     },
     methods: {
       currentPageTab (val) {
+        console.log({ val })
         if (val === 'login') {
           localStorage.removeItem('pageOpenedList')
           sessionStorage.clear()
           this.$router.push({
             name: 'login'
           })
+        } else if (val === 'ddledit') {
+          this.current_ddl_count += 1
+          util.openMultiplePage(this, val, this.current_ddl_count)
         } else {
           util.openPage(this, val)
         }

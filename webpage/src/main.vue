@@ -68,10 +68,10 @@
     <div class="single-page-con" :style="{paddingLeft: hideMenuText?'60px':'200px'}">
       <div class="single-page">
         <keep-alive>
-          <router-view v-if="$route.meta.keepAlive">
+          <router-view :key="$route.name+$route.params.window" v-if="$route.meta.keepAlive">
           </router-view>
         </keep-alive>
-        <router-view v-if="!$route.meta.keepAlive">
+        <router-view  :key="$route.name+$route.params.window" v-if="!$route.meta.keepAlive">
         </router-view>
       </div>
     </div>
