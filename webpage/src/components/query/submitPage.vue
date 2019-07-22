@@ -65,7 +65,7 @@
         axios.delete(`${this.$config.url}/query_worklf`)
           .then(() => {
             this.$router.push({
-              name: 'serach-sql'
+              name: 'search-sql'
             })
           })
       }

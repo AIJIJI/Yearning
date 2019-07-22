@@ -62,11 +62,13 @@
     data () {
       return {
         current_ddl_count: 1,
+        current_dml_count: 1,
+        current_sql_count: 1,
         filtermenulist: {
           'ddledit': '',
           'dmledit': '',
           'indexedit': '',
-          'serach-sql': '1',
+          'search-sql': '1',
           'management-user': '',
           'management-database': '',
           'audit-audit': '1',
@@ -97,6 +99,12 @@
         } else if (val === 'ddledit') {
           this.current_ddl_count += 1
           util.openMultiplePage(this, val, this.current_ddl_count)
+        } else if (val === 'dmledit') {
+          this.current_dml_count += 1
+          util.openMultiplePage(this, val, this.current_ddl_count)
+        } else if (val === 'search-sql') {
+          this.current_ddl_count += 1
+          util.openMultiplePage(this, val, this.current_sql_count)
         } else {
           util.openPage(this, val)
         }

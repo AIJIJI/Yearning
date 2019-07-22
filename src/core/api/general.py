@@ -5,7 +5,7 @@ from django.http import HttpResponse
 from rest_framework.response import Response
 from libs import baseview, con_database, util
 from core.task import grained_permissions, set_auth_group
-from core.api import serachsql
+from core.api import searchsql
 from django.contrib.auth import authenticate
 from core.models import (
     DatabaseList,
@@ -105,7 +105,7 @@ class addressing(baseview.BaseView):
                             port=_connection.port
                     ) as f:
                         res = f.baseItems(sql='show databases')
-                        exclude_db = serachsql.exclued_db_list()
+                        exclude_db = searchsql.exclued_db_list()
                         for db in exclude_db:
                             if db in res:
                                 res.remove(db)

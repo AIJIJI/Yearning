@@ -62,8 +62,8 @@
       }
     },
     methods: {
-      closePage (event, name) {
-        this.$store.commit('removeTag', name)
+      closePage (event, fullname) {
+        this.$store.commit('removeTag', fullname)
         if (this.currentPageName === name) {
           let lastPageName = ''
           if (this.$store.state.pageOpenedList.length > 1) {

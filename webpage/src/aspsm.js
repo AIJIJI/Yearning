@@ -151,9 +151,11 @@ const store = new Vuex.Store({
         })
       }
     },
-    removeTag (state, name) {
+    removeTag (state, fullname) {
+      let [name, window] = fullname.split('-')
+      window = Number(window)
       state.pageOpenedList.map((item, index) => {
-        if (item.name === name) {
+        if (item.name === name && item.window === window) {
           state.pageOpenedList.splice(index, 1)
         }
       })

@@ -81,7 +81,7 @@
           'ddledit': '',
           'dmledit': '',
           'indexedit': '',
-          'serach-sql': '1',
+          'search-sql': '1',
           'management-user': '',
           'management-database': '',
           'audit-audit': '1',

@@ -131,12 +131,12 @@ export const appRouter = [{
     title: '查询',
     component: Index,
     children: [{
-      path: 'serach-sql',
-      name: 'serach-sql',
+      path: 'search-sql',
+      name: 'search-sql',
       title: 'SQL查询',
       icon: 'ios-podium',
       component: resolve => {
-        require(['./components/query/workFlow.vue'], resolve)
+        require(['./components/query/querySql.vue'], resolve)
       }
     }]
   },

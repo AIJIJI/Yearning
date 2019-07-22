@@ -29,7 +29,7 @@ def exclued_db_list():
         return exclued_database_name
 
 
-class DateEncoder(simplejson.JSONEncoder):  # 感谢的凉夜贡献
+class DateEncoder(simplejson.JSONEncoder):
 
     def default(self, o):
         if isinstance(o, datetime.datetime) or isinstance(o, datetime.date) \
@@ -46,11 +46,12 @@ class search(baseview.BaseView):
     '''
 
     @staticmethod
-    def sql_parse(sql):
+    def sql_parse(sql: StopIteration) -> bool:
         for i in sql.split():
             for c in BLACKLIST:
                 if i == c:
                     return True
+        return False
 
     @staticmethod
     def sql_as_ex(sql, sensitive_list):
@@ -91,73 +92,68 @@ class search(baseview.BaseView):
         un_init = util.init_conf()
         custom_com = ast.literal_eval(un_init['other'])
         critical = len(custom_com['sensitive_list'])
-        if user.query_per == 1:
-            if check[-1].startswith('s') is not True:
-                return Response('请勿使用非查询语句,请删除不必要的空白行！')
-            else:
-                address = json.loads(request.data['address'])
-                _c = DatabaseList.objects.filter(
-                    connection_name=user.connection_name,
-                    computer_room=user.computer_room
-                ).first()
-                with con_database.SQLgo(
-                        ip=_c.ip,
-                        password=_c.password,
-                        user=_c.username,
-                        port=_c.port,
-                        db=address['basename']
-                ) as f:
-                    try:
-                        if search.sql_parse(check[-1]):
-                            return Response('语句中不得含有违禁关键字: update insert alter into for drop')
-
-                        if check[-1].startswith('show'):
-                            query_sql = raw_sql
-                        else:
-                            if limit.get('limit').strip() == '':
-                                CUSTOM_ERROR.error('未设置全局最大limit值，系统自动设置为1000')
-                                query_sql = replace_limit(raw_sql, 1000)
-                            else:
-                                query_sql = replace_limit(
-                                    raw_sql, limit.get('limit'))
-                        data_set = f.search(sql=query_sql)
-                    except Exception as e:
-                        CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                        return HttpResponse(e)
-                    else:
-                        if critical:
-                            as_list = search.sql_as_ex(
-                                sql, custom_com['sensitive_list'])
-                            if data_set['data']:
-                                fe = []
-                                for k, v in data_set['data'][0].items():
-                                    if isinstance(v, bytes):
-                                        fe.append(k)
-                                for l in data_set['data']:  # O(N^n+m)
-                                    if len(fe) != 0:
-                                        for i in fe:
-                                            l[i] = 'blob字段为不可呈现类型'
-                                    for s in as_list:
-                                        l[s] = '********'
-                        else:
-                            if data_set['data']:
-                                fe = []
-                                for k, v in data_set['data'][0].items():
-                                    if isinstance(v, bytes):
-                                        fe.append(k)
-                                if len(fe) != 0:
-                                    for l in data_set['data']:   # O(N^n)
-                                        for i in fe:
-                                            l[i] = 'blob字段为不可呈现类型'
-
-                        querypermissions.objects.create(
-                            work_id=user.work_id,
-                            username=request.user,
-                            statements=query_sql
-                        )
-                    return HttpResponse(simplejson.dumps(data_set, cls=DateEncoder, bigint_as_string=True))
-        else:
+        if user.query_per != 1:
             return Response('非法请求,账号无查询权限！')
+        if not check[-1].startswith('s'):
+            return Response('请勿使用非查询语句,请删除不必要的空白行！')
+        address = json.loads(request.data['address'])
+        _c = DatabaseList.objects.filter(
+            connection_name=user.connection_name,
+            computer_room=user.computer_room
+        ).first()
+        with con_database.SQLgo(
+                ip=_c.ip,
+                password=_c.password,
+                user=_c.username,
+                port=_c.port,
+                db=address['basename']
+        ) as f:
+            try:
+                if search.sql_parse(check[-1]):
+                    return Response('语句中不得含有违禁关键字: update insert alter into for drop')
+
+                if check[-1].startswith('show'):
+                    query_sql = raw_sql
+                elif limit.get('limit').strip() == '':
+                    CUSTOM_ERROR.error('未设置全局最大limit值，系统自动设置为1000')
+                    query_sql = replace_limit(raw_sql, 1000)
+                else:
+                    query_sql = replace_limit(
+                        raw_sql, limit.get('limit'))
+                data_set = f.search(sql=query_sql)
+            except Exception as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+                return HttpResponse(e)
+            else:
+                if critical:
+                    as_list = search.sql_as_ex(
+                        sql, custom_com['sensitive_list'])
+                    if data_set['data']:
+                        fe = []
+                        for k, v in data_set['data'][0].items():
+                            if isinstance(v, bytes):
+                                fe.append(k)
+                        for l in data_set['data']:
+                            for i in fe:
+                                l[i] = 'blob字段为不可呈现类型'
+                            for s in as_list:
+                                l[s] = '********'
+                elif data_set['data']:
+                    fe = []
+                    for k, v in data_set['data'][0].items():
+                        if isinstance(v, bytes):
+                            fe.append(k)
+                    for i in fe:
+                        for l in data_set['data']:
+                            l[i] = 'blob字段为不可呈现类型'
+
+                querypermissions.objects.create(
+                    work_id=user.work_id,
+                    username=request.user,
+                    statements=query_sql
+                )
+            return HttpResponse(simplejson.dumps(data_set, cls=DateEncoder, bigint_as_string=True))
+
 
     def put(self, request, args: str = None):
         base = request.data['base']
@@ -192,14 +188,13 @@ def replace_limit(sql, limit):
     :argument 根据正则匹配分析输入信息 当limit数目超过配置文件规定的最大数目时将会采用配置文件的最大数目
 
     '''
-
     if sql[-1] != ';':
         sql += ';'
     sql_re = re.search(r'limit\s.*\d.*;', sql.lower())
     length = ''
-    if sql_re is not None:
+    if sql_re:
         c = re.search(r'\d.*', sql_re.group())
-        if c is not None:
+        if c:
             if c.group().find(',') != -1:
                 length = c.group()[-2]
             else:
@@ -207,34 +202,41 @@ def replace_limit(sql, limit):
         if int(length) <= int(limit):
             return sql
         else:
-            sql = re.sub(r'limit\s.*\d.*;', 'limit %s;' % limit, sql)
-            return sql
+            return re.sub(r'limit\s.*\d.*;', 'limit %s;' % limit, sql)
     else:
-        sql = sql.rstrip(';') + ' limit %s;' % limit
-        return sql
+        return sql.rstrip(';') + ' limit %s;' % limit
 
 
 class query_worklf(baseview.BaseView):
 
     def get(self, request, args: str = None):
         page = request.GET.get('page')
-        qurey = json.loads(request.GET.get('query'))
-        start = int(page) * 20 - 20
+        query = json.loads(request.GET.get('query'))
         end = int(page) * 20
-        if qurey['valve']:
-            if qurey['picker'][0] is '':
-                info = query_order.objects.filter(username__contains=qurey['user']).order_by(
-                    '-id')[
-                       start:end]
-                page_number = query_order.objects.filter(username__contains=qurey['user']).only('id').count()
+        start = end - 20
+        if query['valve']:
+            if query['picker'][0] == '':
+                info = query_order.objects\
+                    .filter(username__contains=query['user'])\
+                    .order_by('-id')\
+                    [start:end]
+                page_number = query_order.objects\
+                    .filter(username__contains=query['user'])\
+                    .only('id').count()
             else:
                 picker = []
-                for i in qurey['picker']:
+                for i in query['picker']:
                     picker.append(i)
-                info = query_order.objects.filter(username__contains=qurey['user'], date__gte=picker[0],
-                                                  date__lte=picker[1]).order_by('-id')[start:end]
-                page_number = query_order.objects.filter(username__contains=qurey['user'], date__gte=picker[0],
-                                                         date__lte=picker[1]).only('id').count()
+                info = query_order.objects\
+                    .filter(username__contains=query['user'],
+                            date__gte=picker[0],
+                            date__lte=picker[1])\
+                    .order_by('-id')\
+                    [start:end]
+                page_number = query_order.objects\
+                    .filter(username__contains=query['user'], date__gte=picker[0],
+                            date__lte=picker[1])\
+                    .only('id').count()
         else:
             info = query_order.objects.all().order_by('-id')[start:end]
             page_number = query_order.objects.only('id').count()
@@ -437,19 +439,31 @@ class Query_order(baseview.SuperUserpermissions):
         start = (int(page) - 1) * 20
         end = int(page) * 20
         if qurey['valve']:
-            if qurey['picker'][0] is '':
-                info = query_order.objects.filter(username__contains=qurey['user']).order_by(
-                    '-id')[
-                       start:end]
-                page_number = query_order.objects.filter(username__contains=qurey['user']).only('id').count()
+            if qurey['picker'][0] == '':
+                info = query_order.objects\
+                    .filter(username__contains=qurey['user'])\
+                    .order_by('-id')\
+                    [start:end]
+                page_number = query_order.objects\
+                    .filter(username__contains=qurey['user'])\
+                    .only('id')\
+                    .count()
             else:
                 picker = []
                 for i in qurey['picker']:
                     picker.append(i)
-                info = query_order.objects.filter(username__contains=qurey['user'], date__gte=picker[0],
-                                                  date__lte=picker[1]).order_by('-id')[start:end]
-                page_number = query_order.objects.filter(username__contains=qurey['user'], date__gte=picker[0],
-                                                         date__lte=picker[1]).only('id').count()
+                info = query_order.objects\
+                    .filter(username__contains=qurey['user'],
+                            date__gte=picker[0],
+                            date__lte=picker[1])\
+                    .order_by('-id')\
+                    [start:end]
+                page_number = query_order.objects\
+                    .filter(username__contains=qurey['user'],
+                            date__gte=picker[0],
+                            date__lte=picker[1])\
+                    .only('id')\
+                    .count()
         else:
             info = query_order.objects.all().order_by('-id')[start:end]
             page_number = query_order.objects.only('id').count()
