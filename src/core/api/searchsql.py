@@ -1,15 +1,14 @@
 import json
 import logging
 import datetime
-import re
 import threading
 import ast
-import simplejson, time
+import simplejson
 from django.http import HttpResponse
 from rest_framework.response import Response
 from libs.serializers import Query_review, Query_list
-from libs import baseview, send_email, util
-from libs import con_database
+from libs import baseview, send_email, util, con_database
+import libs
 from core.models import DatabaseList, Account, querypermissions, query_order, globalpermissions
 
 CUSTOM_ERROR = logging.getLogger('Yearning.core.views')
@@ -25,8 +24,7 @@ def exclued_db_list():
     except Exception as e:
         CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
         exclued_database_name = []
-    finally:
-        return exclued_database_name
+    return exclued_database_name
 
 
 class DateEncoder(simplejson.JSONEncoder):
@@ -44,42 +42,6 @@ class search(baseview.BaseView):
                 可以自由limit数目 当limit数目超过配置文件规定的最大数目时将会采用配置文件的最大数目
 
     '''
-
-    @staticmethod
-    def sql_parse(sql: StopIteration) -> bool:
-        for i in sql.split():
-            for c in BLACKLIST:
-                if i == c:
-                    return True
-        return False
-
-    @staticmethod
-    def sql_as_ex(sql, sensitive_list):
-        count = 0
-        sql = sql.split(',')
-        complete = []
-        for comma in sql:
-            _a = comma.split(' ')
-            for _i in _a:
-                if _i is not '':
-                    complete.append(_i)
-        for gen in complete:
-            if gen == 'as':
-                count += 1
-        if count != 0:
-            as_list = []
-            for i in range(len(complete)):
-                if complete[i] == 'as':
-                    for s in sensitive_list:
-                        if complete[i - 1] == s:
-                            as_list.append(complete[i + 1].rstrip(','))
-
-            if as_list is not None:
-                for sen_i in as_list:
-                    sensitive_list.append(sen_i)
-            return sensitive_list
-        else:
-            return sensitive_list
 
     def post(self, request, args=None):
         un_init = util.init_conf()
@@ -109,16 +71,16 @@ class search(baseview.BaseView):
                 db=address['basename']
         ) as f:
             try:
-                if search.sql_parse(check[-1]):
+                if libs.sql.parse(check[-1]):
                     return Response('语句中不得含有违禁关键字: update insert alter into for drop')
 
                 if check[-1].startswith('show'):
                     query_sql = raw_sql
                 elif limit.get('limit').strip() == '':
                     CUSTOM_ERROR.error('未设置全局最大limit值，系统自动设置为1000')
-                    query_sql = replace_limit(raw_sql, 1000)
+                    query_sql = libs.sql.replace_limit(raw_sql, 1000)
                 else:
-                    query_sql = replace_limit(
+                    query_sql = libs.sql.replace_limit(
                         raw_sql, limit.get('limit'))
                 data_set = f.search(sql=query_sql)
             except Exception as e:
@@ -126,7 +88,7 @@ class search(baseview.BaseView):
                 return HttpResponse(e)
             else:
                 if critical:
-                    as_list = search.sql_as_ex(
+                    as_list = libs.sql.as_ex(
                         sql, custom_com['sensitive_list'])
                     if data_set['data']:
                         fe = []
@@ -182,30 +144,6 @@ class search(baseview.BaseView):
             return Response({'error': '非法请求,账号无查询权限！'})
 
 
-def replace_limit(sql, limit):
-    '''
-
-    :argument 根据正则匹配分析输入信息 当limit数目超过配置文件规定的最大数目时将会采用配置文件的最大数目
-
-    '''
-    if sql[-1] != ';':
-        sql += ';'
-    sql_re = re.search(r'limit\s.*\d.*;', sql.lower())
-    length = ''
-    if sql_re:
-        c = re.search(r'\d.*', sql_re.group())
-        if c:
-            if c.group().find(',') != -1:
-                length = c.group()[-2]
-            else:
-                length = c.group().rstrip(';')
-        if int(length) <= int(limit):
-            return sql
-        else:
-            return re.sub(r'limit\s.*\d.*;', 'limit %s;' % limit, sql)
-    else:
-        return sql.rstrip(';') + ' limit %s;' % limit
-
 
 class query_worklf(baseview.BaseView):
 
@@ -218,8 +156,7 @@ class query_worklf(baseview.BaseView):
             if query['picker'][0] == '':
                 info = query_order.objects\
                     .filter(username__contains=query['user'])\
-                    .order_by('-id')\
-                    [start:end]
+                    .order_by('-id')[start:end]
                 page_number = query_order.objects\
                     .filter(username__contains=query['user'])\
                     .only('id').count()
@@ -231,8 +168,7 @@ class query_worklf(baseview.BaseView):
                     .filter(username__contains=query['user'],
                             date__gte=picker[0],
                             date__lte=picker[1])\
-                    .order_by('-id')\
-                    [start:end]
+                    .order_by('-id')[start:end]
                 page_number = query_order.objects\
                     .filter(username__contains=query['user'], date__gte=picker[0],
                             date__lte=picker[1])\
@@ -274,7 +210,8 @@ class query_worklf(baseview.BaseView):
                     thread = threading.Thread(
                         target=push_message,
                         args=(
-                            {'to_user': request.user, 'workid': work_id}, 5, request.user, userinfo.email, work_id,
+                            {'to_user': request.user,
+                                'workid': work_id}, 5, request.user, userinfo.email, work_id,
                             '提交'))
                     thread.start()
                 except Exception as e:
@@ -384,8 +321,10 @@ class query_worklf(baseview.BaseView):
             basename = request.data['base']
             highlist = []
             children = []
-            database = query_order.objects.filter(username=request.user).order_by('-id').first()
-            _connection = DatabaseList.objects.filter(connection_name=database.connection_name).first()
+            database = query_order.objects.filter(
+                username=request.user).order_by('-id').first()
+            _connection = DatabaseList.objects.filter(
+                connection_name=database.connection_name).first()
             with con_database.SQLgo(ip=_connection.ip,
                                     user=_connection.username,
                                     password=_connection.password,
@@ -397,7 +336,8 @@ class query_worklf(baseview.BaseView):
                     field = f.query_info(
                         sql='select COLUMN_NAME from information_schema.COLUMNS where table_name = "%s"' % c[key])
                     for z in field:
-                        highlist.append({'vl': z['COLUMN_NAME'], 'meta': '字段名'})
+                        highlist.append(
+                            {'vl': z['COLUMN_NAME'], 'meta': '字段名'})
                     highlist.append({'vl': c[key], 'meta': '表名'})
                     children.append({
                         'title': c[key]
@@ -405,7 +345,8 @@ class query_worklf(baseview.BaseView):
             return Response({'table': children, 'highlight': highlist})
 
     def delete(self, request, args: str = None):
-        data = query_order.objects.filter(username=request.user).order_by('-id').first()
+        data = query_order.objects.filter(
+            username=request.user).order_by('-id').first()
         query_order.objects.filter(work_id=data.work_id).delete()
         return Response('')
 

@@ -20,8 +20,10 @@
     <div>
       <transition-group name="taglist-moving-animation">
         <Tag
-          v-for="item in pageTagsList" :key="item.name+item.window||''" :name="item.name+'-'+item.window"
+          v-for="item in pageTagsList" 
           type="dot"
+          :key="item.name+item.window||''" 
+          :name="item.name+'-'+item.window"
           :closable="item.name==='home_index'?false:true"
           :color="item.children?(item.children[0].name===currentPageName?'primary':'default'):(item.name===currentPageName && item.window==currentPageWindow?'primary':'default')"
           @on-close="closePage"
@@ -79,8 +81,7 @@
         }
       },
       linkTo (name, title, window) {
-        console.log()
-        console.log({ name, title, window, pageList: this.pageTagsList, currentPageWindow: this.currentPageWindow, currentPageName: this.currentPageName })
+        console.log({ name, title, window, pageList: this.pageTagsList, currentPageWindow: this.$store.state.currentPageWindow, currentPageName: this.$store.state.currentPageName })
         this.$router.push({
           name: name,
           params: {
@@ -90,6 +91,8 @@
         this.$store.commit('Breadcrumbset', name)
         this.$store.state.currentPageName = name
         this.$store.state.currentPageWindow = window
+        console.log('after linkto')
+        console.log({ name, title, window, pageList: this.pageTagsList, currentPageWindow: this.$store.state.currentPageWindow, currentPageName: this.$store.state.currentPageName })
       },
       handleTagsOption (type) {
         if (type === 'clearAll') {

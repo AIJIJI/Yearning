@@ -1,310 +1,159 @@
 <style lang="less">
-@import "../../styles/common.less";
-@import "../order/components/table.less";
-
-p {
-  word-wrap: break-word;
-  word-break: break-all;
-  overflow: hidden;
-}
+  @import "../../styles/common.less";
+  @import "../order/components/table.less";
 </style>
-<template>
-  <div>
-    <Row>
-      <Col span="6">
-        <Card>
-          <p slot="title">
-            <Icon type="ios-redo"></Icon>选择数据库 <a href="http://order.yingyingwork.com/db-order/workorder/new">选择 Oracle</a>
-          </p>
-          <div class="edittable-test-con">
-            <Form :model="formItem" :label-width="100" ref="formItem" :rules="ruleValidate">
-              <Form-item label="机房:" prop="computer_room">
-                <Select v-model="formItem.computer_room" placeholder="请选择" @on-change="acquireCon">
-                  <Option v-for="i in dataset" :value="i" :key="i">{{ i }}</Option>
-                </Select>
-              </Form-item>
-              <Form-item label="连接名称:" prop="connection_name">
-                <Select
-                  v-model="formItem.connection_name"
-                  placeholder="请选择"
-                  @on-change="acquireBase"
-                >
-                  <Option
-                    v-for="i in tableform.sqlname"
-                    :value="i.connection_name"
-                    :key="i.connection_name"
-                  >{{ i.connection_name }}</Option>
-                </Select>
-              </Form-item>
-              <Form-item label="数据库库名:" prop="basename">
-                <Select
-                  v-model="formItem.basename"
-                  placeholder="请选择"
-                  @on-change="acquireTable"
-                  filterable
-                >
-                  <Option v-for="item in tableform.basename" :value="item" :key="item">{{ item }}</Option>
-                </Select>
-              </Form-item>
-              <Form-item label="数据库表名:">
-                <Select v-model="formItem.tablename" placeholder="请选择" filterable>
-                  <Option v-for="item in tableform.info" :value="item" :key="item">{{ item }}</Option>
-                </Select>
-              </Form-item>
-              <Form-item>
-                <Button type="primary" @click="acquireStruct()">获取表结构信息</Button>
-                <Button type="error" @click="canel()">重置</Button>
-              </Form-item>
-              <FormItem label="工单提交说明:" prop="text">
-                <Input v-model="formItem.text" placeholder="请输入工单说明" type="textarea" rows="4"></Input>
-              </FormItem>
-              <FormItem label="指定审核人:" prop="assigned">
-                <Select v-model="formItem.assigned" filterable transfer>
-                  <Option v-for="i in assigned" :value="i" :key="i">{{i}}</Option>
-                </Select>
-              </FormItem>
-              <FormItem label="定时执行">
-                <DatePicker format="yyyy-MM-dd HH:mm" type="datetime" placeholder="选择时间点" :options="invalidDate" :editable="false"
-                            v-model="formItem.delay" @on-change="formItem.delay=$event"></DatePicker>
-              </FormItem>
-              <FormItem label="是否备份" prop="backup">
-                <RadioGroup v-model="formItem.backup">
-                  <Radio label="1">是</Radio>
-                  <Radio label="0">否</Radio>
-                </RadioGroup>
-              </FormItem>
-            </Form>
-          </div>
-        </Card>
-      </Col>
-      <Col span="18" class="padding-left-10">
-        <Card>
-          <p slot="title">
-            <Icon type="md-remove"></Icon>填写SQL语句
-          </p>
-          <div class="edittable-table-height-con">
-            <Tabs :value="tabs">
-              <TabPane label="填写SQL语句" name="order1" icon="md-code">
-                <Form>
-                  <FormItem>
-                    <editor
-                      v-model="formDynamic"
-                      @init="editorInit"
-                      @setCompletions="setCompletions"
-                    ></editor>
-                  </FormItem>
-                  <FormItem>
-                    <Table :columns="testColumns" :data="testResults" highlight-row></Table>
-                  </FormItem>
-                  <FormItem>
-                    <Button type="warning" @click="testSql" :loading="loading">检测语句</Button>
-                    <Button
-                      type="success"
-                      style="margin-left: 3%"
-                      @click="commitOrder"
-                      :disabled="validate_gen"
-                    >提交工单</Button>
-                  </FormItem>
-                </Form>
-              </TabPane>
-              <TabPane label="表结构详情" name="order2" icon="md-folder">
-                <Table :columns="fieldColumns" :data="fieldData"></Table>
-              </TabPane>
-              <TabPane label="索引详情" name="order3" icon="md-folder">
-                <Table :columns="idxColums" :data="idxData"></Table>
-              </TabPane>
-            </Tabs>
-          </div>
-        </Card>
-      </Col>
-    </Row>
-  </div>
-</template>
 
+<template><div><Row>
+<i-col span="6">
+  <Card>
+    <p slot="title">
+      <Icon type="ios-redo"></Icon>
+      选择数据库 <a href="http://order.yingyingwork.com/db-order/workorder/new">选择 Oracle</a>
+    </p>
+    <div class="edittable-test-con">
+      <div id="showImage" class="margin-bottom-10">
+        <Form ref="input" :model="input" :rules="ruleValidate" :label-width="80">
+          <FormItem label="机房:" prop="cabinet">
+            <Select v-model="input.cabinet" @on-change="ScreenConnection">
+              <Option v-for="i in responses.cabinets" :key="i" :value="i">{{i}}</Option>
+            </Select>
+          </FormItem>
+          <FormItem label="连接名:" prop="connection">
+            <Select v-model="input.connection" @on-change="onChangeConnection">
+              <Option
+                v-for="connection in responses.optional_connections"
+                :value="connection.name"
+                :key="connection.name"
+              >{{ connection.connection_name }}
+              </Option>
+            </Select>
+          </FormItem>
+        </Form>
+      </div>
+      <div class="edittable-test-con">
+        <div id="showImage" class="margin-bottom-10">
+            <div class="tree">
+              <Tree
+                :data="table_tree"
+                @on-select-change="onSelectTree"
+                @on-toggle-expand="onExpandTree"
+                @empty-text="数据加载中"
+              ></Tree>
+            </div>
+          </div>
+      </div>
+    </div>
+  </Card>
+</i-col>
+<i-col span="18" class="padding-left-10">
+  <Card>
+    <p slot="title">
+      <Icon type="ios-crop-strong"></Icon>填写sql语句
+    </p>
+    <editor v-model="input.sql" @init="editorInit" @setCompletions="setCompletions"></editor>
+    <br>
+    <p>当前选择的库: {{input.database}}</p>
+    <br>
+    <Button type="error" icon="md-trash" @click.native="ClearForm()">清除</Button>
+    <Button type="info" icon="md-brush" @click.native="beautify()">美化</Button>
+    <Button
+      type="success"
+      icon="ios-redo"
+      @click.native="onQuerySql()"
+      v-if="input.sql && input.cabinet && input.connection"
+    >查询</Button>
+    <Button
+      type="primary"
+      icon="ios-cloud-download"
+      @click.native="exportdata()"
+      v-if="responses.query_results"
+    >导出查询数据</Button>
+    <br>
+    <br>
+    <p>查询结果:</p>
+    <Table :columns="columnsName" :data="query_results_current_page" highlight-row ref="table"></Table>
+    <br>
+    <Page :total="total" show-total @on-change="splice_arr" ref="totol"></Page>
+  </Card>
+</i-col>
+</Row></div></template>
 <script>
-//
+import ICol from '../../../node_modules/iview/src/components/grid/col.vue'
 import axios from 'axios'
-import ICol from 'iview/src/components/grid/col'
+import Csv from '../../../node_modules/iview/src/utils/csv'
+import ExportCsv from '../../../node_modules/iview/src/components/table/export-csv'
+const DEFAULT_COMPUTER_ROOM = '上海机房'
+const concat_ = function (arr1, arr2) {
+  let arr = arr1.concat();
+  for (let i = 0; i < arr2.length; i++) {
+    arr.indexOf(arr2[i]) === -1 ? arr.push(arr2[i]) : 0;
+  }
+  return arr;
+}
+
+const exportcsv = function exportCsv (params) {
+  if (params.filename) {
+    if (params.filename.indexOf('.csv') === -1) {
+      params.filename += '.csv'
+    }
+  } else {
+    params.filename = 'table.csv'
+  }
+
+  let columns = []
+  let datas = []
+  if (params.columns && params.data) {
+    columns = params.columns
+    datas = params.data
+  } else {
+    columns = this.columns
+    if (!('original' in params)) params.original = true
+    datas = params.original ? this.data : this.rebuildData
+  }
+
+  let noHeader = false
+  if ('noHeader' in params) noHeader = params.noHeader
+  const data = Csv(columns, datas, params, noHeader)
+  if (params.callback) params.callback(data)
+  else ExportCsv.download(params.filename, data)
+}
 
 export default {
   components: {
     ICol,
     editor: require('../../libs/editor')
   },
+  name: 'SQLsyntax',
   data () {
     return {
+      table_tree: [], // 左侧数据库展示树
+      total: 0, // 查询结果条目
       invalidDate: {
         disabledDate (date) {
           return date && date.valueOf() < Date.now() - 86400000
         }
       },
-      dataset: [],
-      item: {},
-      basename: [],
-      sqlname: [],
-      tableform: {
-        sqlname: [],
-        basename: [],
-        info: []
+      validate_gen: true,
+      input: { // 用户交互
+        sql: '',  // 输入的 SQL 语句
+        cabinet: DEFAULT_COMPUTER_ROOM,  // 机房选择
+        connection_name: '',  // 连接名选择
+        database: '', // 用户选择的数据库名
+        table: '' // 用户选择的表名
       },
-
-      ruleValidate: {
-        computer_room: [
-          {
-            required: true,
-            message: '机房地址不得为空',
-            trigger: 'change'
-          }
-        ],
-        connection_name: [
-          {
-            required: true,
-            message: '连接名不得为空',
-            trigger: 'change'
-          }
-        ],
-        basename: [
-          {
-            required: true,
-            message: '数据库名不得为空',
-            trigger: 'change'
-          }
-        ],
-        text: [
-          {
-            required: true,
-            message: '提交说明不得为空',
-            trigger: 'blur'
-          }
-        ],
-        assigned: [
-          {
-            required: true,
-            message: '审核人不得为空',
-            trigger: 'change'
-          }
-        ],
-        backup: { required: true, message: '备份不得为空', trigger: 'change' }
-      },
-      formItem: {
-        text: '',
-        computer_room: '上海机房',
-        connection_name: '',
-        basename: '',
-        tablename: '',
-        backup: '0',
-        assigned: '',
-        delay: null
+      columnsName: [], // 查询结果列名
+      query_results_current_page: [],
+      allowed_connections: [], // as IConnection[], // 用户允许访问的连接
+      current_connection: {}, // as IConnection, // 当前选中的连接
+      responses: {
+        optional_connections: [], // as IConnection[] // 下拉菜单中的连接
+        basenamelist: [],
+        sqllist: [],
+        cabinets: [],
+        query_results: [] // 查询结果
       },
       id: null,
-      tabs: 'order1',
-      optionData: [
-        'varchar',
-        'int',
-        'char',
-        'tinytext',
-        'text',
-        'mediumtext',
-        'longtext',
-        'blob',
-        'mediumblob',
-        'longblob',
-        'tinyint',
-        'smallint',
-        'mediumint',
-        'bigint',
-        'time',
-        'year',
-        'date',
-        'datetime',
-        'timestamp',
-        'decimal',
-        'float',
-        'double',
-        'jason'
-      ],
-      assigned: [],
-      formDynamic: '',
-      validate_gen: true,
       wordList: [],
-      testColumns: [
-        {
-          title: 'ID',
-          key: 'ID',
-          width: 50
-        },
-        {
-          title: '阶段',
-          key: 'stage',
-          width: 100
-        },
-        {
-          title: '错误等级',
-          key: 'errlevel',
-          width: 100
-        },
-        {
-          title: '阶段状态',
-          key: 'stagestatus',
-          width: 150
-        },
-        {
-          title: '错误信息',
-          key: 'errormessage'
-        },
-        {
-          title: '当前检查的sql',
-          key: 'sql'
-        },
-        {
-          title: '预计影响的SQL',
-          key: 'affected_rows',
-          width: 130
-        }
-      ],
-      testResults: [],
-      fieldColumns: [
-        {
-          title: '字段名',
-          key: 'Field'
-        },
-        {
-          title: '字段类型',
-          key: 'Type',
-          editable: true
-        },
-        {
-          title: '字段是否为空',
-          key: 'Null',
-          editable: true,
-          option: true
-        },
-        {
-          title: '默认值',
-          key: 'Default',
-          editable: true
-        },
-        {
-          title: '备注',
-          key: 'Extra'
-        }
-      ],
-      fieldData: [],
-      idxColums: [
-        {
-          title: '索引名称',
-          key: 'key_name'
-        },
-        {
-          title: '是否唯一索引',
-          key: 'Non_unique'
-        },
-        {
-          title: '字段名',
-          key: 'column_name'
-        }
-      ],
-      idxData: [],
       loading: false
     }
   },
@@ -318,178 +167,176 @@ export default {
         }
       }))
     },
+
     editorInit: function () {
       require('brace/mode/mysql')
       require('brace/theme/xcode')
     },
-    acquireCon (index) {
-      if (index) {
-        this.tableform.sqlname = this.item.filter(item => {
-          if (item.computer_room === index) {
-            return item
-          }
-        })
-      }
-    },
-    acquireBase (index) {
-      if (index) {
-        this.id = this.item.filter(item => {
-          if (item.connection_name === index) {
-            return item
-          }
-        })
-        axios.put(`${this.$config.url}/workorder/basename`, {
-          'id': this.id[0].id
-        })
-          .then(res => {
-            this.tableform.basename = res.data
-          })
-          .catch(() => {
-            this.$config.err_notice('无法连接数据库!请检查网络')
-          })
-      }
-    },
-    acquireTable () {
-      if (this.formItem.basename) {
-        let data = JSON.stringify(this.formItem)
-        axios.put(`${this.$config.url}/workorder/tablename`, {
-          'data': data,
-          'id': this.id[0].id
-        })
-          .then(res => {
-            this.tableform.info = res.data
-          }).catch(error => {
-            this.$config.err_notice(this, error)
-          })
-      }
-    },
-    acquireBasic () {
-      axios.put(`${this.$config.url}/workorder/connection`, { 'permissions_type': 'ddl' })
+
+    onExpandTree (vl) {
+      if (vl.expand === true) {
+        axios.put(`${this.$config.url}/query_worklf`, { 'mode': 'table', 'base': vl.title })
         .then(res => {
-          this.item = res.data['connection']
-          this.assigned = res.data['assigend']
-          this.dataset = res.data['custom']
+          this.wordList = concat_(this.wordList, res.data.highlight)
+          for (let i = 0; i < this.table_tree[0].children.length; i++) {
+            if (this.table_tree[0].children[i].title === vl.title) {
+              this.table_tree[0].children[i].children = res.data.table
+            }
+          }
+        })
+      }
+    },
+
+    splice_arr (page) {
+      this.query_results_current_page = this.responses.query_results.slice(page * 10 - 10, page * 10)
+    },
+
+    beautify () {
+      axios.put(`${this.$config.url}/sqlsyntax/beautify`, {
+        'data': this.input.sql
+      })
+        .then(res => {
+          this.input.sql = res.data
         })
         .catch(error => {
           this.$config.err_notice(this, error)
         })
     },
-    acquireStruct () {
-      this.$refs['formItem'].validate((valid) => {
-        if (valid) {
-          this.$Spin.show({
-            render: (h) => {
-              return h('div', [
-                h('Icon', {
-                  props: {
-                    size: 30,
-                    type: 'ios-loading'
-                  },
-                  style: {
-                    animation: 'ani-demo-spin 1s linear infinite'
-                  }
-                }),
-                h('div', '数据库连接中,请稍后........')
-              ])
-            }
-          })
-          axios.put(`${this.$config.url}/workorder/field`, {
-            'connection_info': JSON.stringify(this.formItem),
-            'id': this.id[0].id
-          })
-            .then(res => {
-              this.fieldData = res.data.field
-              this.idxData = res.data.idx
-              this.$Spin.hide()
-            })
-            .catch(() => {
-              this.$config.err_notice(this, '连接失败！详细信息请查看日志')
-              this.$Spin.hide()
-            })
-        } else {
-          this.$Message.error('表单验证失败!')
+
+    ScreenConnection (cabinet) {
+      this.input.connection = ''
+      this.responses.optional_connections = this.allowed_connections.filter(
+        connection => connection.cabinet === cabinet)
+    },
+
+    onChangeConnection (name) {
+      this.current_connection = this.allowed_connections.filter(
+        connection => connection.name === name)
+      this.get_databases()
+      // if (index) {
+      //   this.id = this.allowed_connections.filter(
+      //     item => item.connection_name === index)
+      //   axios.put(`${this.$config.url}/workorder/basename`, {
+      //     'id': this.id[0].id
+      //   })
+      //     .then(res => {
+      //       this.responses.basenamelist = res.data
+      //     })
+      //     .catch(() => {
+      //       this.$config.err_notice(this, '无法连接数据库!请检查网络')
+      //     })
+      // }
+    },
+
+    onQuerySql () {
+      this.$Spin.show({
+        render: (h) => {
+          return h('div', [
+            h('Icon', {
+              props: {
+                size: 30,
+                type: 'ios-loading'
+              },
+              style: {
+                animation: 'ani-demo-spin 1s linear infinite'
+              }
+            }),
+            h('div', '正在查询,请稍后........')
+          ])
         }
       })
+      axios.post(`${this.$config.url}/query/sql`, {
+        'sql': this.input.sql,
+        'cabinet': this.input.cabinet,
+        'connection': this.input.connection,
+        'database': this.input.database
+      }).then(res => {
+        if (!res.data['data']) {
+          this.$config.err_notice(this, res.data)
+        } else {
+          this.columnsName = res.data['title']
+          this.responses.query_results = res.data['data']
+          this.query_results_current_page = this.responses.query_results.slice(0, 10)
+          this.total = res.data['len']
+        }
+        this.$Spin.hide()
+      })
+      .catch(err => {
+        this.$config.err_notice(this, err)
+        this.$Spin.hide()
+      })
     },
-    testSql () {
-      let ddl = ['select', 'insert', 'update', 'delete']
-      let createtable = this.formDynamic.split(';')
-      for (let i of createtable) {
-        for (let c of ddl) {
-          i = i.replace(/(^\s*)|(\s*$)/g, '')
-          if (i.toLowerCase().indexOf(c) === 0) {
-            this.$Message.error('不可提交非DDL语句!')
-            return false
+
+    exportdata () {
+      exportcsv({
+        filename: 'Yearning_Data',
+        original: true,
+        data: this.responses.query_results,
+        columns: this.columnsName
+      })
+    },
+
+    onSelectTree (nodes) {
+      // 选择树节点
+      let node = nodes[0]
+      if (node.children) {
+        // 点击数据库
+        this.input.database = node.title
+        return
+      }
+      for (let database of this.table_tree[0].children) {
+        for (let table of database.children) {
+          if (table.title === node.title && table.nodeKey === node.nodeKey) {
+            this.input.database = database.title
+            this.input.table = table.title
           }
         }
       }
-      this.$refs['formItem'].validate((valid) => {
-        if (valid) {
-          this.loading = true
-          let tmp = this.formDynamic.replace(/(;|；)$/gi, '').replace(/；/g, ';')
-          axios.put(`${this.$config.url}/sqlsyntax/test`, {
-            'id': this.id[0].id,
-            'base': this.formItem.basename,
-            'sql': tmp
-          })
-            .then(res => {
-              this.testResults = res.data.result
-              let gen = 0
-              this.testResults.forEach(vl => {
-                if (vl.errlevel !== 0) {
-                  gen += 1
-                }
-              })
-              if (gen === 0) {
-                this.validate_gen = false
-              } else {
-                this.validate_gen = true
-              }
-              this.loading = false
-            })
-            .catch(() => {
-              this.loading = false
-              this.$config.err_notice(this, '无法连接到Inception!')
-            })
-        } else {
-          this.$Message.error('请填写具体地址或sql语句后再测试!')
-        }
-      })
+      // 展示 table 数据
+      axios.put(`${this.$config.url}/search`, { 'base': this.input.database, 'table': this.input.table })
+        .then(res => {
+          if (res.data['error']) {
+            this.$config.err_notice(this, res.data['error'])
+          } else {
+            this.columnsName = res.data['title']
+            this.responses.query_results = res.data['data']
+            this.query_results_current_page = this.responses.query_results.slice(0, 10)
+            this.total = res.data['len']
+          }
+        })
     },
-    commitOrder () {
-      this.$refs['formItem'].validate((valid) => {
-        if (valid) {
-          let sql = this.formDynamic.replace(/(;|；)$/gi, '').replace(/\s/g, ' ').replace(/；/g, ';')
-          axios.post(`${this.$config.url}/sqlsyntax/`, {
-            'data': JSON.stringify(this.formItem),
-            'sql': JSON.stringify(sql),
-            'real_name': sessionStorage.getItem('real_name'),
-            'type': 0,
-            'id': this.id[0].id
-          })
-            .then(res => {
-              this.validate_gen = true
-              this.$Notice.success({
-                title: '成功',
-                desc: res.data
-              })
-            })
-            .catch(error => {
-              this.validate_gen = true
-              this.$config.err_notice(this, error)
-            })
-        }
-      })
+
+    ClearForm () {
+      this.input.sql = ''
     },
-    canel () {
-      this.$refs['formItem'].resetFields()
+
+    get_databases () {
+      axios.get(`${this.$config.url}/query/databases?connection=${this.input.connection}`)
+        .then(res => {
+          this.table_tree = res.data.info
+          let tWord = this.$config.highlight.split('|')
+          for (let i of tWord) {
+            this.wordList.push({ 'vl': i, 'meta': '关键字' })
+          }
+          this.wordList = this.wordList.concat(res.data.highlight)
+          res.data['status'] === 1 ? this.export_data = true : this.export_data = false
+      })
     }
   },
+
   mounted () {
+    axios.put(`${this.$config.url}/workorder/connection`, {'permissions_type': 'query'})
+      .then(res => {
+        this.allowed_connections = res.data['connection']
+        this.responses.cabinets = res.data['custom']
+        this.ScreenConnection(DEFAULT_COMPUTER_ROOM)
+      })
+      .catch(error => {
+        this.$config.err_notice(this, error)
+      })
     for (let i of this.$config.highlight.split('|')) {
-      this.wordList.push({ 'vl': i, 'meta': '关键字' })
+      this.wordList.push({'vl': i, 'meta': '关键字'})
     }
-    this.acquireBasic()
   }
 }
 </script>

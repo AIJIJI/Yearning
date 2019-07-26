@@ -130,15 +130,26 @@ export const appRouter = [{
     name: 'view',
     title: '查询',
     component: Index,
-    children: [{
-      path: 'search-sql',
-      name: 'search-sql',
-      title: 'SQL查询',
-      icon: 'ios-podium',
-      component: resolve => {
-        require(['./components/query/querySql.vue'], resolve)
+    children: [
+      {
+        path: 'directQuery/:window',
+        name: 'directQuery',
+        title: '直接SQL查询',
+        icon: 'ios-podium',
+        component: resolve => {
+          require(['./components/query/directQuery.vue'], resolve)
+        }
+      },
+      {
+        path: 'oldQuery',
+        name: 'oldQuery',
+        title: '旧式SQL查询',
+        icon: 'ios-podium',
+        component: resolve => {
+          require(['./components/query/Workflow.vue'], resolve)
+        }
       }
-    }]
+    ]
   },
   {
     path: '/audit',

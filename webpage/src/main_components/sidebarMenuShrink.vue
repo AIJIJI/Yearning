@@ -81,7 +81,7 @@
           'ddledit': '',
           'dmledit': '',
           'indexedit': '',
-          'search-sql': '1',
+          'directQuery': '1',
           'management-user': '',
           'management-database': '',
           'audit-audit': '1',

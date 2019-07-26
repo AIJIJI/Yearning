@@ -49,7 +49,6 @@
   </Menu>
 </template>
 <script>
-  //
   import util from '../libs/util'
   import axios from 'axios'
 
@@ -67,8 +66,9 @@
         filtermenulist: {
           'ddledit': '',
           'dmledit': '',
+          'oldQuery': '1',
           'indexedit': '',
-          'search-sql': '1',
+          'directQuery': '1',
           'management-user': '',
           'management-database': '',
           'audit-audit': '1',
@@ -102,8 +102,8 @@
         } else if (val === 'dmledit') {
           this.current_dml_count += 1
           util.openMultiplePage(this, val, this.current_ddl_count)
-        } else if (val === 'search-sql') {
-          this.current_ddl_count += 1
+        } else if (val === 'directQuery') {
+          this.current_sql_count += 1
           util.openMultiplePage(this, val, this.current_sql_count)
         } else {
           util.openPage(this, val)

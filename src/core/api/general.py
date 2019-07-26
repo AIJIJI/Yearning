@@ -53,8 +53,10 @@ class addressing(baseview.BaseView):
                                     {
                                         'id': con_instance.id,
                                         'connection_name': con_instance.connection_name,
+                                        'name': con_instance.connection_name,
                                         'ip': con_instance.ip,
-                                        'computer_room': con_instance.computer_room
+                                        'computer_room': con_instance.computer_room,
+                                        'cabinet': con_instance.computer_room
                                     })
                     assigned = set_auth_group(request.user)
                     return Response({'assigend': assigned['person'], 'connection': con_name,

@@ -100,9 +100,12 @@ util.openMultiplePage = function (vm, name, window) {
   vm.$store.commit('Breadcrumbset', tag)
   vm.$store.state.currentPageName = tag
   util.taglist(vm, name, window)
+  console.log(vm.$store.state.currentPageName)
 }
 
 util.openPage = function (vm, name) {
+  console.log('open single page')
+  console.log({ vm, name, window })
   vm.$router.push({name: name})
   vm.$store.commit('Breadcrumbset', name)
   vm.$store.state.currentPageName = name

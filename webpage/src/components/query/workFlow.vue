@@ -83,7 +83,7 @@
         },
         step: {
           remark: '',
-          computer_room: '上海机房',
+          computer_room: '',
           connection_name: '',
           person: '',
           export: '0'

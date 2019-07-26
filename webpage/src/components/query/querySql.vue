@@ -283,7 +283,7 @@ export default {
         .then(res => this.$config.notice(res.data))
         .catch(err => this.$config.err_notice(this, err))
       this.$router.push({
-        name: 'search-sql'
+        name: 'directQuery'
       })
     }
   },
@@ -292,7 +292,7 @@ export default {
       .then(res => {
         if (res.data !== 1) {
           this.$router.push({
-            name: 'search-sql'
+            name: 'directQuery'
           })
         } else {
           axios.put(`${this.$config.url}/query_worklf`, { 'mode': 'info' })

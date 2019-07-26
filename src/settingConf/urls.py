@@ -34,6 +34,7 @@ from core.api.applygrained import (
 )
 from core.api.sqlorder import sqlorder
 from core.api.searchsql import search, query_worklf, Query_order
+from core.api import query
 from core.api.osc import osc_step
 from core.api.myorder import order
 from core.api.general import addressing, exAES
@@ -47,6 +48,10 @@ urlpatterns = [
     url(r'^api/v1/setting/(.*)', setting_view.as_view()),
     url(r'^api/v1/query_order', Query_order.as_view()),
     url(r'^api/v1/query_worklf', query_worklf.as_view()),
+    url(r'^api/v1/query/databases', query.databases),
+    url(r'^api/v1/query/tables', query.tables),
+    url(r'^api/v1/query/sql', query.SQL.as_view()),
+    # url(r'^api/v1/direct_query', DirectQuery.as_view()),
     url(r'^api/v1/userinfo/(.*)', userinfo.as_view()),
     url(r'^api/v1/loginregister/(.*)', login_register.as_view()),
     url(r'^api/v1/audit_grained/(.*)', audit_grained.as_view()),
