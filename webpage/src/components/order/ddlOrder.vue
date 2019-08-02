@@ -8,123 +8,119 @@ p {
   overflow: hidden;
 }
 </style>
-<template>
-  <div>
-    <Row>
-      <Col span="6">
-        <Card>
-          <p slot="title">
-            <Icon type="ios-redo"></Icon>选择数据库 <a href="http://order.yingyingwork.com/db-order/workorder/new">选择 Oracle</a>
-          </p>
-          <div class="edittable-test-con">
-            <Form :model="formItem" :label-width="100" ref="formItem" :rules="ruleValidate">
-              <Form-item label="机房:" prop="computer_room">
-                <Select v-model="formItem.computer_room" placeholder="请选择" @on-change="acquireCon">
-                  <Option v-for="i in dataset" :value="i" :key="i">{{ i }}</Option>
-                </Select>
-              </Form-item>
-              <Form-item label="连接名称:" prop="connection_name">
-                <Select
-                  v-model="formItem.connection_name"
-                  placeholder="请选择"
-                  @on-change="acquireBase"
-                >
-                  <Option
-                    v-for="i in tableform.sqlname"
-                    :value="i.connection_name"
-                    :key="i.connection_name"
-                  >{{ i.connection_name }}</Option>
-                </Select>
-              </Form-item>
-              <Form-item label="数据库库名:" prop="basename">
-                <Select
-                  v-model="formItem.basename"
-                  placeholder="请选择"
-                  @on-change="acquireTable"
-                  filterable
-                >
-                  <Option v-for="item in tableform.basename" :value="item" :key="item">{{ item }}</Option>
-                </Select>
-              </Form-item>
-              <Form-item label="数据库表名:">
-                <Select v-model="formItem.tablename" placeholder="请选择" filterable>
-                  <Option v-for="item in tableform.info" :value="item" :key="item">{{ item }}</Option>
-                </Select>
-              </Form-item>
-              <Form-item>
-                <Button type="primary" @click="acquireStruct()">获取表结构信息</Button>
-                <Button type="error" @click="canel()">重置</Button>
-              </Form-item>
-              <FormItem label="工单提交说明:" prop="text">
-                <Input v-model="formItem.text" placeholder="请输入工单说明" type="textarea" rows=4 />
+<template><div><Row>
+  <i-col span="6">
+    <Card>
+      <p slot="title">
+        <Icon type="ios-redo"></Icon>选择数据库 <a href="http://order.yingyingwork.com/db-order/workorder/new">选择 Oracle</a>
+      </p>
+      <div class="edittable-test-con">
+        <Form :model="formItem" :label-width="100" ref="formItem" :rules="ruleValidate">
+          <Form-item label="机房:" prop="computer_room">
+            <Select v-model="formItem.computer_room" placeholder="请选择" @on-change="acquireCon">
+              <Option v-for="i in dataset" :value="i" :key="i">{{ i }}</Option>
+            </Select>
+          </Form-item>
+          <Form-item label="连接名称:" prop="connection_name">
+            <Select
+              v-model="formItem.connection_name"
+              placeholder="请选择"
+              @on-change="acquireBase"
+            >
+              <Option
+                v-for="i in tableform.sqlname"
+                :value="i.connection_name"
+                :key="i.connection_name"
+              >{{ i.connection_name }}</Option>
+            </Select>
+          </Form-item>
+          <Form-item label="数据库库名:" prop="basename">
+            <Select
+              v-model="formItem.basename"
+              placeholder="请选择"
+              @on-change="acquireTable"
+              filterable
+            >
+              <Option v-for="item in tableform.basename" :value="item" :key="item">{{ item }}</Option>
+            </Select>
+          </Form-item>
+          <Form-item label="数据库表名:">
+            <Select v-model="formItem.tablename" placeholder="请选择" filterable>
+              <Option v-for="item in tableform.info" :value="item" :key="item">{{ item }}</Option>
+            </Select>
+          </Form-item>
+          <Form-item>
+            <Button type="primary" @click="acquireStruct()">获取表结构信息</Button>
+            <Button type="error" @click="canel()">重置</Button>
+          </Form-item>
+          <FormItem label="工单提交说明:" prop="text">
+            <Input v-model="formItem.text" placeholder="请输入工单说明" type="textarea" rows=4 />
+          </FormItem>
+          <FormItem label="指定审核人:" prop="assigned">
+            <Select v-model="formItem.assigned" filterable transfer>
+              <Option v-for="i in assigned" :value="i" :key="i">{{i}}</Option>
+            </Select>
+          </FormItem>
+          <FormItem label="定时执行">
+            <DatePicker format="yyyy-MM-dd HH:mm" type="datetime" placeholder="选择时间点" :options="invalidDate" :editable="false"
+                        v-model="formItem.delay" @on-change="formItem.delay=$event"></DatePicker>
+          </FormItem>
+          <FormItem label="是否备份" prop="backup">
+            <RadioGroup v-model="formItem.backup">
+              <Radio label="1">是</Radio>
+              <Radio label="0">否</Radio>
+            </RadioGroup>
+          </FormItem>
+        </Form>
+      </div>
+    </Card>
+  </i-col>
+  <i-col span="18" class="padding-left-10">
+    <Card>
+      <p slot="title">
+        <Icon type="md-remove"></Icon>填写SQL语句
+      </p>
+      <div class="edittable-table-height-con">
+        <Tabs :value="tabs">
+          <TabPane label="填写SQL语句" name="order1" icon="md-code">
+            <Form>
+              <FormItem>
+                <editor
+                  v-model="formDynamic"
+                  @init="editorInit"
+                  @setCompletions="setCompletions"
+                ></editor>
               </FormItem>
-              <FormItem label="指定审核人:" prop="assigned">
-                <Select v-model="formItem.assigned" filterable transfer>
-                  <Option v-for="i in assigned" :value="i" :key="i">{{i}}</Option>
-                </Select>
+              <FormItem>
+                <Table :columns="testColumns" :data="testResults" highlight-row></Table>
               </FormItem>
-              <FormItem label="定时执行">
-                <DatePicker format="yyyy-MM-dd HH:mm" type="datetime" placeholder="选择时间点" :options="invalidDate" :editable="false"
-                            v-model="formItem.delay" @on-change="formItem.delay=$event"></DatePicker>
-              </FormItem>
-              <FormItem label="是否备份" prop="backup">
-                <RadioGroup v-model="formItem.backup">
-                  <Radio label="1">是</Radio>
-                  <Radio label="0">否</Radio>
-                </RadioGroup>
+              <FormItem>
+                <Button type="warning" @click="testSql" :loading="loading">检测语句</Button>
+                <Button
+                  type="success"
+                  style="margin-left: 3%"
+                  @click="commitOrder"
+                  :disabled="validate_gen"
+                >提交工单</Button>
               </FormItem>
             </Form>
-          </div>
-        </Card>
-      </Col>
-      <Col span="18" class="padding-left-10">
-        <Card>
-          <p slot="title">
-            <Icon type="md-remove"></Icon>填写SQL语句
-          </p>
-          <div class="edittable-table-height-con">
-            <Tabs :value="tabs">
-              <TabPane label="填写SQL语句" name="order1" icon="md-code">
-                <Form>
-                  <FormItem>
-                    <editor
-                      v-model="formDynamic"
-                      @init="editorInit"
-                      @setCompletions="setCompletions"
-                    ></editor>
-                  </FormItem>
-                  <FormItem>
-                    <Table :columns="testColumns" :data="testResults" highlight-row></Table>
-                  </FormItem>
-                  <FormItem>
-                    <Button type="warning" @click="testSql" :loading="loading">检测语句</Button>
-                    <Button
-                      type="success"
-                      style="margin-left: 3%"
-                      @click="commitOrder"
-                      :disabled="validate_gen"
-                    >提交工单</Button>
-                  </FormItem>
-                </Form>
-              </TabPane>
-              <TabPane label="表结构详情" name="order2" icon="md-folder">
-                <Table :columns="fieldColumns" :data="fieldData"></Table>
-              </TabPane>
-              <TabPane label="索引详情" name="order3" icon="md-folder">
-                <Table :columns="idxColums" :data="idxData"></Table>
-              </TabPane>
-            </Tabs>
-          </div>
-        </Card>
-      </Col>
-    </Row>
-  </div>
-</template>
+          </TabPane>
+          <TabPane label="表结构详情" name="order2" icon="md-folder">
+            <Table :columns="fieldColumns" :data="fieldData"></Table>
+          </TabPane>
+          <TabPane label="索引详情" name="order3" icon="md-folder">
+            <Table :columns="idxColums" :data="idxData"></Table>
+          </TabPane>
+        </Tabs>
+      </div>
+    </Card>
+  </i-col>
+</Row></div></template>
 
 <script>
-//
 import axios from 'axios'
 import ICol from 'iview/src/components/grid/col'
+// import { DEFAULT_COMPUTER_ROOM } from '../../constants'
 
 export default {
   components: {
@@ -486,6 +482,16 @@ export default {
     }
   },
   mounted () {
+    axios
+    .put(`${this.$config.url}/workorder/connection`, {'permissions_type': 'query'})
+    .then(res => {
+      this.tableform.sqlname = res.data['connection']
+      // this.responses.cabinets = res.data['custom']
+      // this.ScreenConnection(DEFAULT_COMPUTER_ROOM)
+    })
+    .catch(error => {
+      this.$config.err_notice(this, error)
+    })
     for (let i of this.$config.highlight.split('|')) {
       this.wordList.push({ 'vl': i, 'meta': '关键字' })
     }

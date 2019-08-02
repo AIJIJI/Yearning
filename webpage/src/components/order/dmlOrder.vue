@@ -3,124 +3,122 @@
   @import "components/table.less";
 </style>
 
-<template>
-  <div>
-    <Row>
-      <Col span="6">
-        <Card>
-          <p slot="title">
-            <Icon type="ios-redo"></Icon>
-            选择数据库 <a href="http://order.yingyingwork.com/db-order/workorder/new">选择 Oracle</a>
-          </p>
-          <div class="edittable-test-con">
-            <div id="showImage" class="margin-bottom-10">
-              <Form ref="formItem" :model="formItem" :rules="ruleValidate" :label-width="80">
-                <FormItem label="机房:" prop="computer_room">
-                  <Select v-model="formItem.computer_room" @on-change="ScreenConnection">
-                    <Option v-for="i in datalist.computer_roomlist" :key="i" :value="i">{{i}}</Option>
-                  </Select>
-                </FormItem>
+<template><div><Row>
+<i-col span="6">
+  <Card>
+    <p slot="title">
+      <Icon type="ios-redo"></Icon>
+      选择数据库 <a href="http://order.yingyingwork.com/db-order/workorder/new">选择 Oracle</a>
+    </p>
+    <div class="edittable-test-con">
+      <div id="showImage" class="margin-bottom-10">
+        <Form ref="formItem" :model="formItem" :rules="ruleValidate" :label-width="80">
+          <FormItem label="机房:" prop="computer_room">
+            <Select v-model="formItem.computer_room" @on-change="ScreenConnection">
+              <Option v-for="i in datalist.computer_roomlist" :key="i" :value="i">{{i}}</Option>
+            </Select>
+          </FormItem>
 
-                <FormItem label="连接名:" prop="connection_name">
-                  <Select v-model="formItem.connection_name" @on-change="DataBaseName">
-                    <Option
-                      v-for="i in datalist.connection_name_list"
-                      :value="i.connection_name"
-                      :key="i.connection_name"
-                    >{{ i.connection_name }}
-                    </Option>
-                  </Select>
-                </FormItem>
+          <FormItem label="连接名:" prop="connection_name">
+            <Select v-model="formItem.connection_name" @on-change="DataBaseName">
+              <Option
+                v-for="i in datalist.connection_name_list"
+                :value="i.connection_name"
+                :key="i.connection_name"
+              >{{ i.connection_name }}
+              </Option>
+            </Select>
+          </FormItem>
 
-                <FormItem label="库名:" prop="basename">
-                  <Select v-model="formItem.basename">
-                    <Option
-                      v-for="item in datalist.basenamelist"
-                      :value="item"
-                      :key="item"
-                    >{{ item }}
-                    </Option>
-                  </Select>
-                </FormItem>
+          <FormItem label="库名:" prop="basename">
+            <Select v-model="formItem.basename">
+              <Option
+                v-for="item in datalist.basenamelist"
+                :value="item"
+                :key="item"
+              >{{ item }}
+              </Option>
+            </Select>
+          </FormItem>
 
-                <FormItem label="工单说明:" prop="text">
-                  <Input v-model="formItem.text" placeholder="请输入" type="textarea" rows="4"></Input>
-                </FormItem>
+          <FormItem label="工单说明:" prop="text">
+            <Input v-model="formItem.text" placeholder="请输入" type="textarea" rows="4"></Input>
+          </FormItem>
 
-                <FormItem label="指定审核人:" prop="assigned">
-                  <Select v-model="formItem.assigned" filterable>
-                    <Option v-for="i in this.assigned" :value="i" :key="i">{{i}}</Option>
-                  </Select>
-                </FormItem>
+          <FormItem label="指定审核人:" prop="assigned">
+            <Select v-model="formItem.assigned" filterable>
+              <Option v-for="i in this.assigned" :value="i" :key="i">{{i}}</Option>
+            </Select>
+          </FormItem>
 
-                <FormItem label="是否备份" required>
-                  <RadioGroup v-model="formItem.backup">
-                    <Radio label="1">是</Radio>
-                    <Radio label="0">否</Radio>
-                  </RadioGroup>
-                </FormItem>
+          <FormItem label="是否备份" required>
+            <RadioGroup v-model="formItem.backup">
+              <Radio label="1">是</Radio>
+              <Radio label="0">否</Radio>
+            </RadioGroup>
+          </FormItem>
 
-                <FormItem label="定时执行">
-                  <DatePicker format="yyyy-MM-dd HH:mm" type="datetime" placeholder="选择时间点" :options="invalidDate"
-                              v-model="formItem.delay" @on-change="formItem.delay=$event" :editable="false"></DatePicker>
-                </FormItem>
-              </Form>
-              <Form :label-width="30">
-                <FormItem>
-                  <Button type="info" icon="md-brush" @click.native="beautify()">美化</Button>
-                  <Button
-                    type="error"
-                    icon="md-trash"
-                    @click.native="ClearForm()"
-                    style="margin-left: 10%"
-                  >清除
-                  </Button>
-                </FormItem>
+          <FormItem label="定时执行">
+            <DatePicker format="yyyy-MM-dd HH:mm" type="datetime" placeholder="选择时间点" :options="invalidDate"
+                        v-model="formItem.delay" @on-change="formItem.delay=$event" :editable="false"></DatePicker>
+          </FormItem>
+        </Form>
+        <Form :label-width="30">
+          <FormItem>
+            <Button type="info" icon="md-brush" @click.native="beautify()">美化</Button>
+            <Button
+              type="error"
+              icon="md-trash"
+              @click.native="ClearForm()"
+              style="margin-left: 10%"
+            >清除
+            </Button>
+          </FormItem>
 
-                <FormItem>
-                  <Button type="warning" icon="md-search" @click.native="test_sql()" :loading="loading">检测</Button>
-                  <Button
-                    type="success"
-                    icon="ios-redo"
-                    @click.native="SubmitSQL()"
-                    style="margin-left: 10%"
-                    :disabled="this.validate_gen"
-                  >提交
-                  </Button>
-                </FormItem>
-              </Form>
+          <FormItem>
+            <Button type="warning" icon="md-search" @click.native="test_sql()" :loading="loading">检测</Button>
+            <Button
+              type="success"
+              icon="ios-redo"
+              @click.native="SubmitSQL()"
+              style="margin-left: 10%"
+              :disabled="this.validate_gen"
+            >提交
+            </Button>
+          </FormItem>
+        </Form>
 
-              <Alert style="height: 145px">检测表字段提示信息
-                <template slot="desc">
-                  <p>1.错误等级 0正常,1警告,2错误。</p>
-                  <p>2.阶段状态 审核成功,Audit completed</p>
-                  <p>3.错误信息 用来表示出错错误信息</p>
-                  <p>4.当前检查的sql</p>
-                  <p>注:只有错误等级等于0时提交按钮才会激活</p>
-                </template>
-              </Alert>
-            </div>
-          </div>
-        </Card>
-      </Col>
-      <Col span="18" class="padding-left-10">
-        <Card>
-          <p slot="title">
-            <Icon type="ios-crop"></Icon>
-            填写sql语句
-          </p>
-          <editor v-model="formItem.textarea" @init="editorInit" @setCompletions="setCompletions"></editor>
-          <br>
-          <br>
-          <Table :columns="columnsName" :data="Testresults" highlight-row></Table>
-        </Card>
-      </Col>
-    </Row>
-  </div>
-</template>
+        <Alert style="height: 145px">检测表字段提示信息
+          <template slot="desc">
+            <p>1.错误等级 0正常,1警告,2错误。</p>
+            <p>2.阶段状态 审核成功,Audit completed</p>
+            <p>3.错误信息 用来表示出错错误信息</p>
+            <p>4.当前检查的sql</p>
+            <p>注:只有错误等级等于0时提交按钮才会激活</p>
+          </template>
+        </Alert>
+      </div>
+    </div>
+  </Card>
+</i-col>
+<i-col span="18" class="padding-left-10">
+  <Card>
+    <p slot="title">
+      <Icon type="ios-crop"></Icon>
+      填写sql语句
+    </p>
+    <editor v-model="formItem.textarea" @init="editorInit" @setCompletions="setCompletions"></editor>
+    <br>
+    <br>
+    <Table :columns="columnsName" :data="Testresults" highlight-row></Table>
+  </Card>
+</i-col>
+</Row></div></template>
+
 <script>
   import ICol from '../../../node_modules/iview/src/components/grid/col.vue'
   import axios from 'axios'
+  import { DEFAULT_COMPUTER_ROOM } from '../../constants'
 
   export default {
     components: {
@@ -359,6 +357,7 @@
           this.item = res.data['connection']
           this.assigned = res.data['assigend']
           this.datalist.computer_roomlist = res.data['custom']
+          this.ScreenConnection(DEFAULT_COMPUTER_ROOM)
         })
         .catch(error => {
           this.$config.err_notice(this, error)

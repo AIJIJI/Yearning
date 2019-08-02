@@ -12,7 +12,7 @@
     </p>
     <div class="edittable-test-con">
       <div id="showImage" class="margin-bottom-10">
-        <Form ref="input" :model="input" :rules="ruleValidate" :label-width="80">
+        <Form ref="input" :model="input" :label-width="80">
           <FormItem label="机房:" prop="cabinet">
             <Select v-model="input.cabinet" @on-change="ScreenConnection">
               <Option v-for="i in responses.cabinets" :key="i" :value="i">{{i}}</Option>
@@ -50,9 +50,18 @@
     <p slot="title">
       <Icon type="ios-crop-strong"></Icon>填写sql语句
     </p>
-    <editor v-model="input.sql" @init="editorInit" @setCompletions="setCompletions"></editor>
+    <editor
+      ref="editor"
+      v-model="input.sql"
+      @init="editorInit"
+      @setCompletions="setCompletions"
+    />
     <br>
-    <p>当前选择的库: {{input.database}}</p>
+    <div v-if="input.table">
+      <p>当前选择的表: {{input.database}}.{{input.table}} </p>
+    </div>
+    <div v-else>
+      <p>当前选择的库: {{input.database}}</p></div>
     <br>
     <Button type="error" icon="md-trash" @click.native="ClearForm()">清除</Button>
     <Button type="info" icon="md-brush" @click.native="beautify()">美化</Button>
@@ -61,7 +70,14 @@
       icon="ios-redo"
       @click.native="onQuerySql()"
       v-if="input.sql && input.cabinet && input.connection"
-    >查询</Button>
+    >
+      <nobr v-if="this.$refs.editor.editor.getCopyText()">
+        查询选中部分
+      </nobr>
+      <nobr v-else>
+        查询
+      </nobr>
+    </Button>
     <Button
       type="primary"
       icon="ios-cloud-download"
@@ -70,19 +86,34 @@
     >导出查询数据</Button>
     <br>
     <br>
-    <p>查询结果:</p>
-    <Table :columns="columnsName" :data="query_results_current_page" highlight-row ref="table"></Table>
-    <br>
+     <div class="edittable-table-height-con">
+      <Tabs>
+        <TabPane label="查询结果" name="order1" icon="md-code">
+          <Table
+            :columns="columnsName"
+            :data="query_results_current_page"
+            highlight-row
+            ref="table"
+          />
+        </TabPane>
+        <TabPane label="表结构详情" name="fields_table" icon="md-folder">
+          <Table :columns="fieldColumns" :data="responses.fields" />
+        </TabPane>
+        <TabPane label="索引详情" name="indexs_table" icon="md-folder">
+          <Table :columns="idxColums" :data="responses.indexs" />
+        </TabPane>
+      </Tabs>
+    </div>
     <Page :total="total" show-total @on-change="splice_arr" ref="totol"></Page>
   </Card>
 </i-col>
 </Row></div></template>
+
 <script>
-import ICol from '../../../node_modules/iview/src/components/grid/col.vue'
 import axios from 'axios'
 import Csv from '../../../node_modules/iview/src/utils/csv'
 import ExportCsv from '../../../node_modules/iview/src/components/table/export-csv'
-const DEFAULT_COMPUTER_ROOM = '上海机房'
+import { DEFAULT_COMPUTER_ROOM } from '../../constants'
 const concat_ = function (arr1, arr2) {
   let arr = arr1.concat();
   for (let i = 0; i < arr2.length; i++) {
@@ -90,8 +121,7 @@ const concat_ = function (arr1, arr2) {
   }
   return arr;
 }
-
-const exportcsv = function exportCsv (params) {
+function exportcsv (params) {
   if (params.filename) {
     if (params.filename.indexOf('.csv') === -1) {
       params.filename += '.csv'
@@ -114,16 +144,17 @@ const exportcsv = function exportCsv (params) {
   let noHeader = false
   if ('noHeader' in params) noHeader = params.noHeader
   const data = Csv(columns, datas, params, noHeader)
-  if (params.callback) params.callback(data)
-  else ExportCsv.download(params.filename, data)
+  if (params.callback) {
+    params.callback(data)
+  } else {
+    ExportCsv.download(params.filename, data)
+  }
 }
-
 export default {
   components: {
-    ICol,
     editor: require('../../libs/editor')
   },
-  name: 'SQLsyntax',
+  name: 'DirectQuery',
   data () {
     return {
       table_tree: [], // 左侧数据库展示树
@@ -150,11 +181,53 @@ export default {
         basenamelist: [],
         sqllist: [],
         cabinets: [],
-        query_results: [] // 查询结果
+        query_results: [], // 查询结果
+        fields: [], // 字段信息
+        indexs: [] // 索引信息
       },
       id: null,
       wordList: [],
-      loading: false
+      loading: false,
+      fieldColumns: [
+        {
+          title: '字段名',
+          key: 'Field'
+        },
+        {
+          title: '字段类型',
+          key: 'Type',
+          editable: true
+        },
+        {
+          title: '字段是否为空',
+          key: 'Null',
+          editable: true,
+          option: true
+        },
+        {
+          title: '默认值',
+          key: 'Default',
+          editable: true
+        },
+        {
+          title: '备注',
+          key: 'Extra'
+        }
+      ],
+      idxColums: [
+        {
+          title: '索引名称',
+          key: 'key_name'
+        },
+        {
+          title: '是否唯一索引',
+          key: 'Non_unique'
+        },
+        {
+          title: '字段名',
+          key: 'column_name'
+        }
+      ]
     }
   },
   methods: {
@@ -245,8 +318,9 @@ export default {
           ])
         }
       })
+      const selectedText = this.$refs.editor.editor.getCopyText()
       axios.post(`${this.$config.url}/query/sql`, {
-        'sql': this.input.sql,
+        'sql': selectedText || this.input.sql,
         'cabinet': this.input.cabinet,
         'connection': this.input.connection,
         'database': this.input.database
@@ -255,7 +329,7 @@ export default {
           this.$config.err_notice(this, res.data)
         } else {
           this.columnsName = res.data['title']
-          this.responses.query_results = res.data['data']
+          this.responses.query_results = res.data.data
           this.query_results_current_page = this.responses.query_results.slice(0, 10)
           this.total = res.data['len']
         }
@@ -282,6 +356,7 @@ export default {
       if (node.children) {
         // 点击数据库
         this.input.database = node.title
+        this.input.table = ''
         return
       }
       for (let database of this.table_tree[0].children) {
@@ -293,15 +368,17 @@ export default {
         }
       }
       // 展示 table 数据
-      axios.put(`${this.$config.url}/search`, { 'base': this.input.database, 'table': this.input.table })
+      axios.get(`${this.$config.url}/query/table?connection=${this.input.connection}&database=${this.input.database}&table=${this.input.table}`)
         .then(res => {
           if (res.data['error']) {
             this.$config.err_notice(this, res.data['error'])
           } else {
-            this.columnsName = res.data['title']
-            this.responses.query_results = res.data['data']
-            this.query_results_current_page = this.responses.query_results.slice(0, 10)
-            this.total = res.data['len']
+            // this.columnsName = res.data['title']
+            // this.responses.query_results = res.data['data']
+            this.responses.fields = res.data.field
+            this.responses.indexs = res.data.idx
+            // this.query_results_current_page = this.responses.query_results.slice(0, 10)
+            // this.total = res.data['len']
           }
         })
     },

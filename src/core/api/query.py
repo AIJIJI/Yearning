@@ -5,9 +5,11 @@ import json
 import simplejson
 from django.views.decorators.http import require_http_methods
 from django.http import JsonResponse, HttpResponse
+from rest_framework.decorators import api_view, permission_classes
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from core.models import DatabaseList, querypermissions, query_order, globalpermissions
+from core.task import set_auth_group
 from libs import con_database, util
 import libs
 
@@ -21,26 +23,26 @@ def exclued_db_list():
     return exclued_database_name
 
 
-@require_http_methods(["GET"])
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def databases(request):
     tablelist = []
     highlist = []
     connection_name = request.GET['connection']
-    # database = query_order.objects.filter(
-    #     username=request.user).order_by('-id').first()
     _connection = DatabaseList.objects.filter(
         connection_name=connection_name).first()
     with con_database.SQLgo(ip=_connection.ip,
                             user=_connection.username,
                             password=_connection.password,
                             port=_connection.port) as f:
-        dataname = f.query_info(sql='show databases')
+        print('连接成功')
+        databases = f.query_info(sql='show databases')
     ignore = exclued_db_list()
-    for index, uc in sorted(enumerate(dataname), reverse=True):
+    for index, uc in sorted(enumerate(databases), reverse=True):
         for cc in ignore:
             if uc['Database'] == cc:
-                del dataname[index]
-    for i in dataname:
+                del databases[index]
+    for i in databases:
         highlist.append({'vl': i['Database'], 'meta': '库名'})
         tablelist.append({
             'title': i['Database'],
@@ -54,32 +56,50 @@ def databases(request):
     return JsonResponse({'info': data, 'highlight': highlist})
 
 
-@require_http_methods(["GET"])
-def tables(request):
-    connection_name = request.GET['connection']
-    database_name = request.GET['database']
-    highlist = []
-    children = []
-    _connection = DatabaseList.objects.filter(
-        connection_name=connection_name).first()
-    with con_database.SQLgo(ip=_connection.ip,
-                            user=_connection.username,
-                            password=_connection.password,
-                            port=_connection.port,
-                            db=database_name) as f:
-        tablename = f.query_info(sql='show tables')
-        for c in tablename:
-            key = 'Tables_in_%s' % database_name
-            field = f.query_info(
-                sql='select COLUMN_NAME from information_schema.COLUMNS where table_name = "%s"' % c[key])
-            for z in field:
-                highlist.append(
-                    {'vl': z['COLUMN_NAME'], 'meta': '字段名'})
-            highlist.append({'vl': c[key], 'meta': '表名'})
-            children.append({
-                'title': c[key]
-            })
-    return JsonResponse({'table': children, 'highlight': highlist})
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def table(request):
+    # connection_name = request.GET['connection']
+    # database_name = request.GET['database']
+    # highlist = []
+    # children = []
+    # _connection = DatabaseList.objects.filter(
+    #     connection_name=connection_name).first()
+    # with con_database.SQLgo(ip=_connection.ip,
+    #                         user=_connection.username,
+    #                         password=_connection.password,
+    #                         port=_connection.port,
+    #                         db=database_name) as f:
+    #     tablename = f.query_info(sql='show tables')
+    #     for c in tablename:
+    #         key = 'Tables_in_%s' % database_name
+    #         field = f.query_info(
+    #             sql='select COLUMN_NAME from information_schema.COLUMNS where table_name = "%s"' % c[key])
+    #         for z in field:
+    #             highlist.append(
+    #                 {'vl': z['COLUMN_NAME'], 'meta': '字段名'})
+    #         highlist.append({'vl': c[key], 'meta': '表名'})
+    #         children.append({
+    #             'title': c[key]
+    #         })
+    # return JsonResponse({'table': children, 'highlight': highlist})
+    permission_spec = set_auth_group(request.user)
+    if request.GET['connection'] not in permission_spec['querycon']:
+        return HttpResponse('非法请求,账号无查询权限！')
+    connection = DatabaseList.objects\
+        .filter(connection_name=request.GET['connection'])\
+        .first()
+    with con_database.SQLgo(
+            ip=connection.ip,
+            user=connection.username,
+            password=connection.password,
+            port=connection.port,
+            db=request.GET['database']) as f:
+        # data_set = f.search(sql='desc %s' % request.GET['table'])
+        field = f.gen_alter(table_name=request.GET['table'])
+        idx = f.index(table_name=request.GET['table'])
+        return JsonResponse({ 'idx': idx, 'field': field })
+
 # class DirectQuery(baseview.BaseView):
 
 #     def get(self, request, args: str = None):
@@ -301,8 +321,12 @@ class SQL(APIView):
         un_init = util.init_conf()
         custom_com = ast.literal_eval(un_init['other'])
         critical = len(custom_com['sensitive_list'])
-        if user.query_per != 1:
+
+        permission_spec = set_auth_group(request.user)
+        if request.data['connection'] not in permission_spec['querycon']:
             return HttpResponse('非法请求,账号无查询权限！')
+        
+        
         if not check[-1].startswith('s'):
             return HttpResponse('请勿使用非查询语句,请删除不必要的空白行！')
         _c = DatabaseList.objects.filter(

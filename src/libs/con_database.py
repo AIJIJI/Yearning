@@ -38,6 +38,7 @@ class SQLgo(object):
             charset='utf8mb4',
             port=self.port
         )
+        print(self.con)
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):

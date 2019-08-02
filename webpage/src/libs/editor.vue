@@ -1,4 +1,3 @@
-<!-- thanks by wangjianhui2464-->
 <template>
   <div style="width: 100%;height: 200px"></div>
 </template>

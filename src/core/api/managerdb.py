@@ -143,9 +143,14 @@ class management_db(baseview.SuperUserpermissions):
                 return HttpResponse(status=500)
             else:
                 try:
-                    with con_database.SQLgo(ip=ip, user=user, password=password, port=port):
+                    with con_database.SQLgo(ip=ip, user=user, password=password, port=port) as c:
+                        x = c.query_info(sql='show databases')
+                        print(c.ip)
+                        print(c.port)
+                        print(x)
                         return Response('连接成功!')
                 except Exception as e:
+                    print(e)
                     CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
                     return Response('连接失败!')
 

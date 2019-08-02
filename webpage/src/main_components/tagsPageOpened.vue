@@ -80,6 +80,7 @@
           this.$store.state.currentPageName = lastPageName
         }
       },
+
       linkTo (name, title, window) {
         console.log({ name, title, window, pageList: this.pageTagsList, currentPageWindow: this.$store.state.currentPageWindow, currentPageName: this.$store.state.currentPageName })
         this.$router.push({

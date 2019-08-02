@@ -133,6 +133,7 @@ export const appRouter = [{
     children: [
       {
         path: 'directQuery/:window',
+        meta: { keepAlive: true },
         name: 'directQuery',
         title: '直接SQL查询',
         icon: 'ios-podium',
