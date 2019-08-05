@@ -325,8 +325,8 @@ class SQL(APIView):
         permission_spec = set_auth_group(request.user)
         if request.data['connection'] not in permission_spec['querycon']:
             return HttpResponse('非法请求,账号无查询权限！')
-        
-        
+
+
         if not check[-1].startswith('s'):
             return HttpResponse('请勿使用非查询语句,请删除不必要的空白行！')
         _c = DatabaseList.objects.filter(
@@ -334,23 +334,23 @@ class SQL(APIView):
             connection_name=request.data['connection'],
         ).first()
         with con_database.SQLgo(
-            ip=_c.ip,
-            password=_c.password,
-            user=_c.username,
-            port=_c.port,
-            db=request.data['database']
-        ) as f:
+                ip=_c.ip,
+                password=_c.password,
+                user=_c.username,
+                port=_c.port,
+                db=request.data['database']
+                ) as f:
             try:
                 if libs.sql.parse(check[-1]):
                     return HttpResponse('语句中不得含有违禁关键字: update insert alter into for drop')
-
-                if check[-1].startswith('show'):
-                    query_sql = raw_sql
-                elif limit.get('limit').strip() == '':
-                    query_sql = libs.sql.replace_limit(raw_sql, 1000)
-                else:
-                    query_sql = libs.sql.replace_limit(
-                        raw_sql, limit.get('limit'))
+                
+                query_sql = raw_sql
+                if not check[-1].startswith('show') and int(request.data.get('with_limit', '0')):
+                    if limit.get('limit').strip() == '':
+                        query_sql = libs.sql.replace_limit(raw_sql, 1000)
+                    else:
+                        query_sql = libs.sql.replace_limit(
+                            raw_sql, limit.get('limit'))
                 data_set = f.search(sql=query_sql)
             except Exception as e:
                 return HttpResponse(e)

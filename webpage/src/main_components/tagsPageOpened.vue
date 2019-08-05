@@ -82,7 +82,6 @@
       },
 
       linkTo (name, title, window) {
-        console.log({ name, title, window, pageList: this.pageTagsList, currentPageWindow: this.$store.state.currentPageWindow, currentPageName: this.$store.state.currentPageName })
         this.$router.push({
           name: name,
           params: {
@@ -92,8 +91,6 @@
         this.$store.commit('Breadcrumbset', name)
         this.$store.state.currentPageName = name
         this.$store.state.currentPageWindow = window
-        console.log('after linkto')
-        console.log({ name, title, window, pageList: this.pageTagsList, currentPageWindow: this.$store.state.currentPageWindow, currentPageName: this.$store.state.currentPageName })
       },
       handleTagsOption (type) {
         if (type === 'clearAll') {

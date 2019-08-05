@@ -6,10 +6,6 @@
 <template><div><Row>
 <i-col span="6">
   <Card>
-    <p slot="title">
-      <Icon type="ios-redo"></Icon>
-      选择数据库 <a href="http://order.yingyingwork.com/db-order/workorder/new">选择 Oracle</a>
-    </p>
     <div class="edittable-test-con">
       <div id="showImage" class="margin-bottom-10">
         <Form ref="input" :model="input" :label-width="80">
@@ -72,18 +68,18 @@
       v-if="input.sql && input.cabinet && input.connection"
     >
       <nobr v-if="this.$refs.editor.editor.getCopyText()">
-        查询选中部分
+        查询选中语句
       </nobr>
       <nobr v-else>
-        查询
+        查询全部语句
       </nobr>
     </Button>
     <Button
       type="primary"
       icon="ios-cloud-download"
       @click.native="exportdata()"
-      v-if="responses.query_results"
-    >导出查询数据</Button>
+      v-if="input.sql && input.cabinet && input.connection"
+    >查询全部语句并导出数据</Button>
     <br>
     <br>
      <div class="edittable-table-height-con">
@@ -301,7 +297,7 @@ export default {
       // }
     },
 
-    onQuerySql () {
+    onQuerySql (isExport = false) {
       this.$Spin.show({
         render: (h) => {
           return h('div', [
@@ -319,7 +315,11 @@ export default {
         }
       })
       const selectedText = this.$refs.editor.editor.getCopyText()
-      axios.post(`${this.$config.url}/query/sql`, {
+      let url = `${this.$config.url}/query/sql/`
+      if (!isExport) {
+        url += '?with_limit=1'
+      }
+      axios.post(url, {
         'sql': selectedText || this.input.sql,
         'cabinet': this.input.cabinet,
         'connection': this.input.connection,
@@ -328,10 +328,19 @@ export default {
         if (!res.data['data']) {
           this.$config.err_notice(this, res.data)
         } else {
-          this.columnsName = res.data['title']
-          this.responses.query_results = res.data.data
-          this.query_results_current_page = this.responses.query_results.slice(0, 10)
-          this.total = res.data['len']
+          if (isExport) {
+            exportcsv({
+              filename: 'Yearning_Data',
+              original: true,
+              data: res.data.data,
+              columns: res.data['title']
+            })
+          } else {
+            this.columnsName = res.data['title']
+            this.responses.query_results = res.data.data
+            this.query_results_current_page = this.responses.query_results.slice(0, 10)
+            this.total = res.data['len']
+          }
         }
         this.$Spin.hide()
       })
@@ -342,12 +351,7 @@ export default {
     },
 
     exportdata () {
-      exportcsv({
-        filename: 'Yearning_Data',
-        original: true,
-        data: this.responses.query_results,
-        columns: this.columnsName
-      })
+      this.onQuerySql(true)
     },
 
     onSelectTree (nodes) {
