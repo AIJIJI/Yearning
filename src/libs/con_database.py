@@ -1,15 +1,6 @@
-'''
-
-About connection Database
-
-2017-11-23
-
-cookie
-'''
-
+import pymysql
 from libs.cryptoAES import cryptoAES
 from settingConf import settings
-import pymysql
 
 
 class SQLgo(object):

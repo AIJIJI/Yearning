@@ -15,11 +15,12 @@
       <div class="main-header">
         <div class="navicon-con">
           <Button
-            :style="{transform: 'rotateZ(' + (this.hideMenuText ? '-90' : '0') + 'deg)'}"
             type="text"
             @click="toggleClick"
           >
-            <Icon type="md-menu" size="32"></Icon>
+            <Icon v-if="hideMenuText" type="ios-arrow-forward" size="32" />
+            <Icon v-else type="ios-arrow-back" size="32" />
+            <!-- <Icon type="md-menu" size="32"></Icon> -->
           </Button>
         </div>
         <div class="header-middle-con">

@@ -3,9 +3,9 @@
   @import "../order/components/table.less";
 </style>
 
-<template><div><Row>
-<i-col span="6">
-  <Card>
+<template><div><Row justify="end" >
+<i-col v-show="!hideMenuText" v-bind:span="hideMenuText ? 0 : 6">
+  <Card >
     <div class="edittable-test-con">
       <div id="showImage" class="margin-bottom-10">
         <Form ref="input" :model="input" :label-width="80">
@@ -41,11 +41,19 @@
     </div>
   </Card>
 </i-col>
-<i-col span="18" class="padding-left-10">
+<i-col v-bind:span="hideMenuText ? 24 : 18" class="padding-left-10">
   <Card>
-    <p slot="title">
-      <Icon type="ios-crop-strong"></Icon>填写sql语句
-    </p>
+    <div slot="title">
+      <Button
+        type="text"
+        @click="onClickHidenMenu"
+      >
+        <Icon v-if="hideMenuText" type="ios-arrow-forward" />
+        <Icon v-else type="ios-arrow-back" />
+      </Button>
+      <Icon type="ios-crop-strong" />
+      <b>填写sql语句</b>
+    </div>
     <editor
       ref="editor"
       v-model="input.sql"
@@ -153,6 +161,7 @@ export default {
   name: 'DirectQuery',
   data () {
     return {
+      hideMenuText: false, // 隐藏左侧数据库选择
       table_tree: [], // 左侧数据库展示树
       total: 0, // 查询结果条目
       invalidDate: {
@@ -282,19 +291,10 @@ export default {
       this.current_connection = this.allowed_connections.filter(
         connection => connection.name === name)
       this.get_databases()
-      // if (index) {
-      //   this.id = this.allowed_connections.filter(
-      //     item => item.connection_name === index)
-      //   axios.put(`${this.$config.url}/workorder/basename`, {
-      //     'id': this.id[0].id
-      //   })
-      //     .then(res => {
-      //       this.responses.basenamelist = res.data
-      //     })
-      //     .catch(() => {
-      //       this.$config.err_notice(this, '无法连接数据库!请检查网络')
-      //     })
-      // }
+    },
+
+    onClickHidenMenu () {
+      this.hideMenuText = !this.hideMenuText
     },
 
     onQuerySql (isExport = false) {
