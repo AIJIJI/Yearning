@@ -135,21 +135,22 @@ export const appRouter = [{
         path: 'directQuery/:window',
         meta: { keepAlive: true },
         name: 'directQuery',
-        title: '直接SQL查询',
+        title: '查询',
         icon: 'ios-podium',
         component: resolve => {
           require(['./components/query/directQuery.vue'], resolve)
         }
-      },
-      {
-        path: 'oldQuery',
-        name: 'oldQuery',
-        title: '旧式SQL查询',
-        icon: 'ios-podium',
-        component: resolve => {
-          require(['./components/query/Workflow.vue'], resolve)
-        }
       }
+      // },
+      // {
+      //   path: 'oldQuery',
+      //   name: 'oldQuery',
+      //   title: '旧式SQL查询',
+      //   icon: 'ios-podium',
+      //   component: resolve => {
+      //     require(['./components/query/Workflow.vue'], resolve)
+      //   }
+      // }
     ]
   },
   {

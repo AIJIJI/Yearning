@@ -78,7 +78,7 @@ def table(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def sql(self, request):
+def sql(request):
     un_init = util.init_conf()
     limit = ast.literal_eval(un_init['other'])
     sql = request.data['sql']

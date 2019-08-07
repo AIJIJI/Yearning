@@ -4,7 +4,7 @@
 </style>
 
 <template><div><Row justify="end" >
-<i-col v-show="!hideMenuText" v-bind:span="hideMenuText ? 0 : 6">
+<i-col v-show="!hideMenuText" :span="hideMenuText ? 0 : 6">
   <Card >
     <div class="edittable-test-con">
       <div id="showImage" class="margin-bottom-10">
@@ -41,7 +41,7 @@
     </div>
   </Card>
 </i-col>
-<i-col v-bind:span="hideMenuText ? 24 : 18" class="padding-left-10">
+<i-col :span="hideMenuText ? 24 : 18" class="padding-left-10">
   <Card>
     <div slot="title">
       <Button
@@ -114,6 +114,7 @@
 </Row></div></template>
 
 <script>
+import Vue from 'vue'
 import axios from 'axios'
 import Csv from '../../../node_modules/iview/src/utils/csv'
 import ExportCsv from '../../../node_modules/iview/src/components/table/export-csv'
@@ -288,6 +289,12 @@ export default {
     },
 
     onChangeConnection (name) {
+      // 修改 tag 带连接后缀
+      this.$store.state.pageOpenedList.forEach((tag, index) => {
+        if (tag.window === this.$store.state.currentPageWindow && tag.name === this.$store.state.currentPageName) {
+          Vue.set(this.$store.state.pageOpenedList, index, {...tag, connection: name})
+        }
+      });
       this.current_connection = this.allowed_connections.filter(
         connection => connection.name === name)
       this.get_databases()

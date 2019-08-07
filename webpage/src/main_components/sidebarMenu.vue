@@ -60,9 +60,6 @@
     },
     data () {
       return {
-        current_ddl_count: 1,
-        current_dml_count: 1,
-        current_sql_count: 1,
         filtermenulist: {
           'ddledit': '',
           'dmledit': '',
@@ -88,7 +85,16 @@
       }
     },
     methods: {
+      getValidWindow (name) {
+        const tagsWindows = this.$store.state.pageOpenedList.filter(tag => tag.name === name).map(tag => tag.window)
+        let validWindow = 1
+        while (tagsWindows.includes(validWindow)) {
+          validWindow += 1
+        }
+        return validWindow
+      },
       currentPageTab (val) {
+        const multiWindows = ['ddledit', 'dmledit', 'directQuery']
         console.log({ val })
         if (val === 'login') {
           localStorage.removeItem('pageOpenedList')
@@ -96,15 +102,8 @@
           this.$router.push({
             name: 'login'
           })
-        } else if (val === 'ddledit') {
-          this.current_ddl_count += 1
-          util.openMultiplePage(this, val, this.current_ddl_count)
-        } else if (val === 'dmledit') {
-          this.current_dml_count += 1
-          util.openMultiplePage(this, val, this.current_ddl_count)
-        } else if (val === 'directQuery') {
-          this.current_sql_count += 1
-          util.openMultiplePage(this, val, this.current_sql_count)
+        } else if (multiWindows.includes(val)) {
+          util.openMultiplePage(this, val, this.getValidWindow(val))
         } else {
           util.openPage(this, val)
         }

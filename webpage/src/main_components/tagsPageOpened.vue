@@ -20,16 +20,16 @@
     <div>
       <transition-group name="taglist-moving-animation">
         <Tag
-          v-for="item in pageTagsList" 
           type="dot"
+          v-for="item in pageTagsList" 
           :key="item.name+item.window||''" 
           :name="item.name+'-'+item.window"
           :closable="item.name==='home_index'?false:true"
-          :color="item.children?(item.children[0].name===currentPageName?'primary':'default'):(item.name===currentPageName && item.window==currentPageWindow?'primary':'default')"
+          :color="item.children?(item.children[0].name===$store.state.currentPageName?'primary':'default'):(item.name===$store.state.currentPageName && item.window==$store.state.currentPageWindow?'primary':'default')"
           @on-close="closePage"
           @click.native="linkTo(item.name, item.title, item.window)"
         >
-          {{ item.window ? item.title + '-' + item.window : item.title }}
+          {{ item.connection ? item.title + '-' + item.connection : (item.window ? item.title + '-' + item.window : item.title) }}
         </Tag>
       </transition-group>
     </div>
@@ -43,15 +43,13 @@
       path: string
       name: string
       window?: number
+      connection?: string
     }
   */
   export default {
     name: 'tagsPageOpened',
     data () {
-      console.log(this.$route)
       return {
-        currentPageName: this.$route.name,
-        currentPageWindow: this.$route.params.window,
         tagBodyLeft: 0
       }
     },
@@ -106,9 +104,10 @@
     },
     watch: {
       '$route' (to) {
-        this.currentPageName = to.name
-        this.currentPageWindow = to.params.window
+        this.$store.state.currentPageName = to.name
+        this.$store.state.currentPageWindow = to.params.window
       }
     }
+
   }
 </script>
