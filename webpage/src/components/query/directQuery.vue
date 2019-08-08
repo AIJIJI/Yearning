@@ -174,7 +174,7 @@ export default {
       input: { // 用户交互
         sql: '',  // 输入的 SQL 语句
         cabinet: DEFAULT_COMPUTER_ROOM,  // 机房选择
-        connection_name: '',  // 连接名选择
+        connection: '',  // 连接名选择
         database: '', // 用户选择的数据库名
         table: '' // 用户选择的表名
       },
@@ -254,7 +254,7 @@ export default {
 
     onExpandTree (vl) {
       if (vl.expand === true) {
-        axios.put(`${this.$config.url}/query_worklf`, { 'mode': 'table', 'base': vl.title })
+        axios.get(`${this.$config.url}/query/tables?connection=${this.input.connection}&database=${this.input.database}`)
         .then(res => {
           this.wordList = concat_(this.wordList, res.data.highlight)
           for (let i = 0; i < this.table_tree[0].children.length; i++) {

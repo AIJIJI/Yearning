@@ -73,7 +73,38 @@ def table(request):
         # data_set = f.search(sql='desc %s' % request.GET['table'])
         field = f.gen_alter(table_name=request.GET['table'])
         idx = f.index(table_name=request.GET['table'])
-        return JsonResponse({ 'idx': idx, 'field': field })
+        return JsonResponse({'idx': idx, 'field': field})
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def tables(request):
+    permission_spec = set_auth_group(request.user)
+    if request.GET['connection'] not in permission_spec['querycon']:
+        return HttpResponse('非法请求,账号无查询权限！')
+    highlist = []
+    children = []
+    connection = DatabaseList.objects\
+        .filter(connection_name=request.GET['connection'])\
+        .first()
+    with con_database.SQLgo(ip=connection.ip,
+                            user=connection.username,
+                            password=connection.password,
+                            port=connection.port,
+                            db=request.GET['database']) as f:
+        tablename = f.query_info(sql='show tables')
+        for c in tablename:
+            key = 'Tables_in_%s' % request.GET['database']
+            field = f.query_info(
+                sql='select COLUMN_NAME from information_schema.COLUMNS where table_name = "%s"' % c[key])
+            for z in field:
+                highlist.append(
+                    {'vl': z['COLUMN_NAME'], 'meta': '字段名'})
+            highlist.append({'vl': c[key], 'meta': '表名'})
+            children.append({
+                'title': c[key]
+            })
+    return JsonResponse({'table': children, 'highlight': highlist})
 
 
 @api_view(['POST'])
