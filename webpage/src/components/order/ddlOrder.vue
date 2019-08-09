@@ -120,7 +120,7 @@ p {
 <script>
 import axios from 'axios'
 import ICol from 'iview/src/components/grid/col'
-// import { DEFAULT_COMPUTER_ROOM } from '../../constants'
+import { DEFAULT_COMPUTER_ROOM } from '../../constants'
 
 export default {
   components: {
@@ -135,7 +135,7 @@ export default {
         }
       },
       dataset: [],
-      item: {},
+      item: [],
       basename: [],
       sqlname: [],
       tableform: {
@@ -184,7 +184,7 @@ export default {
       },
       formItem: {
         text: '',
-        computer_room: '上海机房',
+        computer_room: DEFAULT_COMPUTER_ROOM,
         connection_name: '',
         basename: '',
         tablename: '',
@@ -318,7 +318,7 @@ export default {
       require('brace/mode/mysql')
       require('brace/theme/xcode')
     },
-    acquireCon (index) {
+    acquireCon (index = DEFAULT_COMPUTER_ROOM) {
       if (index) {
         this.tableform.sqlname = this.item.filter(item => {
           if (item.computer_room === index) {
@@ -359,12 +359,13 @@ export default {
           })
       }
     },
-    acquireBasic () {
+    acquireBasic (callback) {
       axios.put(`${this.$config.url}/workorder/connection`, { 'permissions_type': 'ddl' })
         .then(res => {
           this.item = res.data['connection']
           this.assigned = res.data['assigend']
           this.dataset = res.data['custom']
+          callback()
         })
         .catch(error => {
           this.$config.err_notice(this, error)
@@ -482,20 +483,20 @@ export default {
     }
   },
   mounted () {
-    axios
-    .put(`${this.$config.url}/workorder/connection`, {'permissions_type': 'query'})
-    .then(res => {
-      this.tableform.sqlname = res.data['connection']
-      // this.responses.cabinets = res.data['custom']
-      // this.ScreenConnection(DEFAULT_COMPUTER_ROOM)
-    })
-    .catch(error => {
-      this.$config.err_notice(this, error)
-    })
+    // axios
+    // .put(`${this.$config.url}/workorder/connection`, {'permissions_type': 'ddl'})
+    // .then(res => {
+    //   this.tableform.sqlname = res.data['connection']
+    //   // this.responses.cabinets = res.data['custom']
+    //   // this.ScreenConnection(DEFAULT_COMPUTER_ROOM)
+    // })
+    // .catch(error => {
+    //   this.$config.err_notice(this, error)
+    // })
     for (let i of this.$config.highlight.split('|')) {
       this.wordList.push({ 'vl': i, 'meta': '关键字' })
     }
-    this.acquireBasic()
+    this.acquireBasic(this.acquireCon)
   }
 }
 </script>
