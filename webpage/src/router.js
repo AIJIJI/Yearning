@@ -124,35 +124,35 @@ export const appRouter = [{
       }
     ]
   },
-  {
-    path: '/view',
-    icon: 'md-search',
-    name: 'view',
-    title: '查询',
-    component: Index,
-    children: [
-      {
-        path: 'directQuery/:window',
-        meta: { keepAlive: true },
-        name: 'directQuery',
-        title: '查询',
-        icon: 'ios-podium',
-        component: resolve => {
-          require(['./components/query/directQuery.vue'], resolve)
-        }
-      }
-      // },
-      // {
-      //   path: 'oldQuery',
-      //   name: 'oldQuery',
-      //   title: '旧式SQL查询',
-      //   icon: 'ios-podium',
-      //   component: resolve => {
-      //     require(['./components/query/Workflow.vue'], resolve)
-      //   }
-      // }
-    ]
-  },
+  // {
+  //   path: '/view',
+  //   icon: 'md-search',
+  //   name: 'view',
+  //   title: '查询',
+  //   component: Index,
+  //   children: [
+  //     {
+  //       path: 'directQuery/:window',
+  //       meta: { keepAlive: true },
+  //       name: 'directQuery',
+  //       title: '查询',
+  //       icon: 'ios-podium',
+  //       component: resolve => {
+  //         require(['./components/query/directQuery.vue'], resolve)
+  //       }
+  //     }
+  //     // },
+  //     // {
+  //     //   path: 'oldQuery',
+  //     //   name: 'oldQuery',
+  //     //   title: '旧式SQL查询',
+  //     //   icon: 'ios-podium',
+  //     //   component: resolve => {
+  //     //     require(['./components/query/Workflow.vue'], resolve)
+  //     //   }
+  //     // }
+  //   ]
+  // },
   {
     path: '/audit',
     icon: 'md-open',
