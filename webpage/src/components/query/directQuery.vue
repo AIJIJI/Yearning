@@ -96,15 +96,16 @@
           <Table
             :columns="columnsName"
             :data="query_results_current_page"
+            height="500"
             highlight-row
             ref="table"
           />
         </TabPane>
         <TabPane label="表结构详情" name="fields_table" icon="md-folder">
-          <Table :columns="fieldColumns" :data="responses.fields" />
+          <Table :columns="fieldColumns" :data="responses.fields" height="500" />
         </TabPane>
         <TabPane label="索引详情" name="indexs_table" icon="md-folder">
-          <Table :columns="idxColums" :data="responses.indexs" />
+          <Table :columns="idxColums" :data="responses.indexs" height="500" />
         </TabPane>
       </Tabs>
     </div>
@@ -254,6 +255,8 @@ export default {
 
     onExpandTree (vl) {
       if (vl.expand === true) {
+        this.input.database = vl.title
+        this.input.table = ''
         axios.get(`${this.$config.url}/query/tables?connection=${this.input.connection}&database=${this.input.database}`)
         .then(res => {
           this.wordList = concat_(this.wordList, res.data.highlight)

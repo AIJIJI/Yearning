@@ -1,11 +1,11 @@
 import ast
 import datetime
 import json
+from decimal import Decimal
 
 import simplejson
 from django.http import JsonResponse, HttpResponse
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from core.models import DatabaseList, querypermissions, query_order, globalpermissions
 from core.task import set_auth_group
@@ -144,7 +144,7 @@ def sql(request):
                 return HttpResponse('语句中不得含有违禁关键字: update insert alter into for drop')
             
             query_sql = raw_sql
-            if not check[-1].startswith('show') and int(request.data.get('with_limit', '0')):
+            if not check[-1].startswith('show') and int(request.GET.get('with_limit', '0')):
                 if limit.get('limit').strip() == '':
                     query_sql = libs.sql.replace_limit(raw_sql, 1000)
                 else:
@@ -190,5 +190,7 @@ class ResultEncoder(json.JSONEncoder):
         if isinstance(o, (datetime.datetime, datetime.date, datetime.time, datetime.timedelta)):
             return str(o)
         if isinstance(o, int):
+            return str(o)
+        if isinstance(o, Decimal):
             return str(o)
         return simplejson.JSONEncoder.default(self, o)
