@@ -2,9 +2,9 @@
  Create your models here.
 
 '''
+import ast
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-import ast
 
 
 class JSONField(models.TextField):
@@ -123,12 +123,6 @@ class applygrained(models.Model):
     real_name = models.CharField(max_length=100, null=True)  # 真实姓名
 
 
-class querypermissions(models.Model):
-    work_id = models.CharField(max_length=50, null=True, db_index=True)
-    username = models.CharField(max_length=100, null=True)
-    statements = models.TextField()
-
-
 class query_order(models.Model):
     work_id = models.CharField(max_length=50, null=True, db_index=True)
     username = models.CharField(max_length=100, null=True)
@@ -141,3 +135,13 @@ class query_order(models.Model):
     audit = models.CharField(max_length=100, null=True)
     time = models.CharField(max_length=100, null=True)
     real_name = models.CharField(max_length=100, null=True)  # 真实姓名
+
+class QueryHistory(models.Model):
+    user = models.ForeignKey(
+        'Account', models.CASCADE, related_name='query_historys')
+    connection = models.ForeignKey(
+        'DatabaseList', models.CASCADE, related_name='query_historys')
+    database = models.CharField(max_length=127)
+    sql = models.TextField()
+    date = models.DateTimeField()
+    count = models.IntegerField()

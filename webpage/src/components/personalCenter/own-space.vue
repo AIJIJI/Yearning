@@ -133,100 +133,98 @@
 </template>
 
 <script>
-  //
+import axios from 'axios'
+import Multiselect from 'vue-multiselect'
 
-  import axios from 'axios'
-  import Multiselect from 'vue-multiselect'
-
-  export default {
-    name: 'own-space',
-    components: {
-      Multiselect
-    },
-    data () {
-      const valideRePassword = (rule, value, callback) => {
-        if (value !== this.editPasswordForm.newPass) {
-          callback(new Error('两次输入密码不一致'))
-        } else {
-          callback()
-        }
+export default {
+  name: 'own-space',
+  components: {
+    Multiselect
+  },
+  data () {
+    const valideRePassword = (rule, value, callback) => {
+      if (value !== this.editPasswordForm.newPass) {
+        callback(new Error('两次输入密码不一致'))
+      } else {
+        callback()
       }
-      return {
-        groupset: Array,
-        editEmailModal: false,
-        editEmailForm: {
-          mail: '',
-          real_name: ''
-        },
-        userForm: Object,
-        formItem: {
-          ddl: '',
-          ddlcon: ''
-        },
-        uid: '', // 登录用户的userId
-        save_loading: false,
-        editPasswordModal: false, // 修改密码模态框显示
-        savePassLoading: false,
-        oldPassError: '',
-        checkIdentifyCodeLoading: false,
-        editPasswordForm: {
-          newPass: '',
-          rePass: ''
-        },
-        passwordValidate: {
-          oldPass: [
-            {
-              required: true,
-              message: '请输入原密码',
-              trigger: 'blur'
-            }
-          ],
-          newPass: [
-            {
-              required: true,
-              message: '请输入新密码',
-              trigger: 'blur'
-            },
-            {
-              min: 6,
-              message: '请至少输入6个字符',
-              trigger: 'blur'
-            },
-            {
-              max: 32,
-              message: '最多输入32个字符',
-              trigger: 'blur'
-            }
-          ],
-          rePass: [{
+    }
+    return {
+      groupset: [],
+      editEmailModal: false,
+      editEmailForm: {
+        mail: '',
+        real_name: ''
+      },
+      userForm: {},
+      formItem: {
+        ddl: '',
+        ddlcon: ''
+      },
+      uid: '', // 登录用户的userId
+      save_loading: false,
+      editPasswordModal: false, // 修改密码模态框显示
+      savePassLoading: false,
+      oldPassError: '',
+      checkIdentifyCodeLoading: false,
+      editPasswordForm: {
+        newPass: '',
+        rePass: ''
+      },
+      passwordValidate: {
+        oldPass: [
+          {
             required: true,
-            message: '请再次输入新密码',
+            message: '请输入原密码',
+            trigger: 'blur'
+          }
+        ],
+        newPass: [
+          {
+            required: true,
+            message: '请输入新密码',
             trigger: 'blur'
           },
-            {
-              validator: valideRePassword,
-              trigger: 'blur'
-            }
-          ]
+          {
+            min: 6,
+            message: '请至少输入6个字符',
+            trigger: 'blur'
+          },
+          {
+            max: 32,
+            message: '最多输入32个字符',
+            trigger: 'blur'
+          }
+        ],
+        rePass: [{
+          required: true,
+          message: '请再次输入新密码',
+          trigger: 'blur'
         },
-        editInfoModal: false,
-        permission: {
-          ddl: '0',
-          ddlcon: Array,
-          dml: '0',
-          dmlcon: Array,
-          query: '0',
-          querycon: Array,
-          index: '0',
-          indexcon: Array,
-          user: '0',
-          base: '0'
-        },
-        permission_list: Object,
-        authgroup: [],
-        applygroup: []
-      }
-    },
+          {
+            validator: valideRePassword,
+            trigger: 'blur'
+          }
+        ]
+      },
+      editInfoModal: false,
+      permission: {
+        ddl: '0',
+        ddlcon: [],
+        dml: '0',
+        dmlcon: [],
+        query: '0',
+        querycon: [],
+        index: '0',
+        indexcon: [],
+        user: '0',
+        base: '0'
+      },
+      permission_list: {},
+      authgroup: [],
+      applygroup: []
+    }
+  },
     methods: {
       openMailChange () {
         this.editEmailModal = true

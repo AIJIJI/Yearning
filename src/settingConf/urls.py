@@ -52,6 +52,7 @@ urlpatterns = [
     url(r'^api/v1/query/table/', query.table),
     url(r'^api/v1/query/tables/', query.tables),
     url(r'^api/v1/query/sql', query.sql),
+    url(r'^api/v1/query/history', query.history),
     # url(r'^api/v1/direct_query', DirectQuery.as_view()),
     url(r'^api/v1/userinfo/(.*)', userinfo.as_view()),
     url(r'^api/v1/loginregister/(.*)', login_register.as_view()),

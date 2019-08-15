@@ -107,6 +107,9 @@
         <TabPane label="索引详情" name="indexs_table" icon="md-folder">
           <Table :columns="idxColums" :data="responses.indexs" height="500" />
         </TabPane>
+        <TabPane label="下载历史" name="history_table" icon="md-folder">
+          <Table :columns="historyColumns" :data="responses.history" height="500" />
+        </TabPane>
       </Tabs>
     </div>
     <Page :total="total" show-total @on-change="splice_arr" ref="totol"></Page>
@@ -190,7 +193,8 @@ export default {
         cabinets: [],
         query_results: [], // 查询结果
         fields: [], // 字段信息
-        indexs: [] // 索引信息
+        indexs: [], // 索引信息
+        history: [] // 下载历史
       },
       id: null,
       wordList: [],
@@ -234,6 +238,20 @@ export default {
           title: '字段名',
           key: 'column_name'
         }
+      ],
+      historyColumns: [
+        {
+          title: '时间',
+          key: 'date'
+        },
+        {
+          title: 'SQL',
+          key: 'sql'
+        },
+        {
+          title: '结果数',
+          key: 'count'
+        }
       ]
     }
   },
@@ -253,10 +271,22 @@ export default {
       require('brace/theme/xcode')
     },
 
+    onChangeDatabase (node) {
+       this.input.database = node.title
+       this.input.table = ''
+       axios.get(`${this.$config.url}/query/history?connection=${this.input.connection}&database=${this.input.database}`)
+        .then(res => {
+          if (res.data['error']) {
+            this.$config.err_notice(this, res.data['error'])
+          } else {
+            this.responses.history = res.data
+          }
+        })
+    },
+
     onExpandTree (vl) {
       if (vl.expand === true) {
-        this.input.database = vl.title
-        this.input.table = ''
+        this.onChangeDatabase(vl)
         axios.get(`${this.$config.url}/query/tables?connection=${this.input.connection}&database=${this.input.database}`)
         .then(res => {
           this.wordList = concat_(this.wordList, res.data.highlight)
@@ -326,7 +356,9 @@ export default {
       })
       const selectedText = this.$refs.editor.editor.getCopyText()
       let url = `${this.$config.url}/query/sql/`
-      if (!isExport) {
+      if (isExport) {
+        url += '?log=1'
+      } else {
         url += '?with_limit=1'
       }
       axios.post(url, {
@@ -369,8 +401,7 @@ export default {
       let node = nodes[0]
       if (node.children) {
         // 点击数据库
-        this.input.database = node.title
-        this.input.table = ''
+        this.onChangeDatabase(node)
         return
       }
       for (let database of this.table_tree[0].children) {

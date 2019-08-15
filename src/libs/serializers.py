@@ -2,10 +2,11 @@
 serializers 
 '''
 from rest_framework import serializers
+from core import models
 from core.models import DatabaseList
 from core.models import SqlRecord
 from core.models import Account
-from core.models import SqlOrder, query_order, querypermissions, globalpermissions, grained
+from core.models import SqlOrder, query_order, globalpermissions, grained
 
 
 class Globalpermissions(serializers.HyperlinkedModelSerializer):
@@ -94,16 +95,16 @@ class Query_review(serializers.HyperlinkedModelSerializer):
             'export', 'time', 'real_name')
 
 
-class Query_list(serializers.HyperlinkedModelSerializer):
-    '''
+# class Query_list(serializers.HyperlinkedModelSerializer):
+#     '''
 
-    查询审计
+#     查询审计
 
-    '''
+#     '''
 
-    class Meta:
-        model = querypermissions
-        fields = ('id', 'statements')
+#     class Meta:
+#         model = querypermissions
+#         fields = ('id', 'statements')
 
 
 class AuthGroup_Serializers(serializers.HyperlinkedModelSerializer):
@@ -114,3 +115,14 @@ class AuthGroup_Serializers(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = grained
         fields = ('id', 'username', 'permissions',)
+
+
+class QueryHistorySerializers(serializers.ModelSerializer):
+
+    connection = query_con(read_only=True)
+    user = UserINFO(read_only=True)
+    date = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
+    
+    class Meta:
+        model = models.QueryHistory
+        fields = '__all__'

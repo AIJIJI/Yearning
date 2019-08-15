@@ -91,7 +91,6 @@ util.showThisRoute = function (itAccess, currentAccess) {
 }
 
 util.openMultiplePage = function (vm, name, window) {
-  console.log({ vm, name, window })
   const tag = `${name}-${window}`
   vm.$router.push({
     name: name,
@@ -100,12 +99,9 @@ util.openMultiplePage = function (vm, name, window) {
   vm.$store.commit('Breadcrumbset', tag)
   vm.$store.state.currentPageName = tag
   util.taglist(vm, name, window)
-  console.log(vm.$store.state.currentPageName)
 }
 
 util.openPage = function (vm, name) {
-  console.log('open single page')
-  console.log({ vm, name, window })
   vm.$router.push({name: name})
   vm.$store.commit('Breadcrumbset', name)
   vm.$store.state.currentPageName = name
@@ -125,6 +121,10 @@ util.taglist = function (vm, name, window) {
       }
     }
   })
+  util.saveTags(vm)
+}
+
+util.saveTags = function (vm) {
   localStorage.setItem('pageOpenedList', JSON.stringify(vm.$store.state.pageOpenedList))
 }
 

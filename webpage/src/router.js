@@ -199,7 +199,7 @@ export const appRouter = [{
     children: [{
         path: 'query-review',
         name: 'query-review',
-        title: '查询审计',
+        title: '下载记录',
         icon: 'md-pulse',
         component: resolve => {
           require(['./components/assistantManger/queryRecord.vue'], resolve)

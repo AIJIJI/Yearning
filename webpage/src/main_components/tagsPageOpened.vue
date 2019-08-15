@@ -37,6 +37,7 @@
 </template>
 
 <script>
+import util from '../libs/util';
   /*
     interface IPageTag {
       title: string
@@ -77,6 +78,7 @@
           this.$store.commit('Breadcrumbset', lastPageName)
           this.$store.state.currentPageName = lastPageName
         }
+        util.saveTags(this)
       },
 
       linkTo (name, title, window) {

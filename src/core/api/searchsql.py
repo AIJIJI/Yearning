@@ -6,10 +6,10 @@ import ast
 import simplejson
 from django.http import HttpResponse
 from rest_framework.response import Response
-from libs.serializers import Query_review, Query_list
+from libs.serializers import Query_review
 from libs import baseview, send_email, util, con_database
 import libs
-from core.models import DatabaseList, Account, querypermissions, query_order, globalpermissions
+from core.models import DatabaseList, Account, query_order, globalpermissions
 
 CUSTOM_ERROR = logging.getLogger('Yearning.core.views')
 
@@ -109,11 +109,6 @@ class search(baseview.BaseView):
                         for l in data_set['data']:
                             l[i] = 'blob字段为不可呈现类型'
 
-                querypermissions.objects.create(
-                    work_id=user.work_id,
-                    username=request.user,
-                    statements=query_sql
-                )
             return HttpResponse(simplejson.dumps(data_set, cls=DateEncoder, bigint_as_string=True))
 
 
@@ -179,14 +174,14 @@ class query_worklf(baseview.BaseView):
         serializers = Query_review(info, many=True)
         return Response({'page': page_number, 'data': serializers.data})
 
-    def post(self, request, args: str = None):
+    # def post(self, request, args: str = None):
 
-        work_id = request.data['workid']
-        user = request.data['user']
-        data = querypermissions.objects.filter(
-            work_id=work_id, username=user).all().order_by('-id')
-        serializers = Query_list(data, many=True)
-        return Response(serializers.data)
+    #     work_id = request.data['workid']
+    #     user = request.data['user']
+    #     data = querypermissions.objects.filter(
+    #         work_id=work_id, username=user).all().order_by('-id')
+    #     serializers = Query_list(data, many=True)
+    #     return Response(serializers.data)
 
     def put(self, request, args: str = None):
 

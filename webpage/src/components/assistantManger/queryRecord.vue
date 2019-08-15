@@ -10,7 +10,7 @@
           <Icon type="md-person"></Icon>查询审计
         </p>
         <Row>
-          <Col span="24">
+          <i-col span="24">
             <Form inline>
               <FormItem>
                 <Input placeholder="账号名" v-model="find.user"></Input>
@@ -24,11 +24,11 @@
                 <Button type="primary" @click="queryCancel">重置</Button>
               </FormItem>
             </Form>
-            <Table border :columns="columns" :data="table_data" stripe size="small"></Table>
-          </Col>
+            <Table border :columns="columns" :data="table_data" stripe size="small" height="500"></Table>
+          </i-col>
         </Row>
         <br>
-        <Page :total="page_number" show-elevator @on-change="currentpage" :page-size="20"></Page>
+        <Page :total="total" show-elevator @on-change="currentpage" :page-size="20"></Page>
       </Card>
     </Row>
   </div>
@@ -41,60 +41,16 @@ export default {
   data () {
     return {
       columns: [
+        { title: '下载时间', key: 'date', sortable: true, width: 131 },
+        { title: '连接名', key: 'connection_name', sortable: true, width: 95 },
+        { title: '数据库', key: 'database', sortable: true, width: 95 },
+        { title: '查询人', key: 'username', width: 95 },
         {
-          title: '工单编号:',
-          key: 'work_id',
-          sortable: true
-        },
-        {
-          title: '查询人',
-          key: 'username'
-        },
-        {
-          title: '查询人姓名',
-          key: 'real_name'
-        },
-        {
-          title: '工单说明',
-          key: 'instructions'
-        },
-        {
-          title: '提交时间:',
-          key: 'date',
-          sortable: true
-        },
-        {
-          title: '操作',
-          key: 'action',
-          align: 'center',
-          render: (h, params) => {
-            return h('div', [
-              h(
-                'Button',
-                {
-                  props: {
-                    size: 'small',
-                    type: 'text'
-                  },
-                  on: {
-                    click: () => {
-                      this.$router.push({
-                        name: 'querylist',
-                        query: {
-                          workid: params.row.work_id,
-                          user: params.row.username
-                        }
-                      });
-                    }
-                  }
-                },
-                '详细信息'
-              )
-            ]);
-          }
+          title: 'SQL',
+          key: 'sql'
         }
       ],
-      page_number: 1,
+      total: 0,
       computer_room: this.$config.computer_room,
       table_data: [],
       find: {
@@ -106,14 +62,26 @@ export default {
   },
   methods: {
     currentpage (vl = 1) {
-      axios
-        .get(`${this.$config.url}/query_worklf?page=${vl}&query=${JSON.stringify(this.find)}`)
-        .then(res => {
-          [this.table_data, this.page_number] = [res.data.data, res.data.page];
-        })
-        .catch(error => {
-          this.$config.err_notice(this, error);
-        });
+      let url = `${this.$config.url}/query/history?all=1&page=${vl}`
+      if (this.find.picker.length === 2) {
+        url += `&pickers=${this.find.picker[0]}&pickers=${this.find.picker[1]}`
+      }
+      if (this.find.user) {
+        url += `&user=${this.find.user}`
+      }
+
+      axios.get(url).then(res => {
+        this.total = res.data.total
+        this.table_data = res.data.data.map(item => ({
+          ...item,
+          connection_name: item.connection.connection_name,
+          username: item.user.username,
+          realname: item.user.real_name
+          }))
+      })
+      .catch(error => {
+        this.$config.err_notice(this, error);
+      });
     },
     queryData () {
       this.find.valve = true

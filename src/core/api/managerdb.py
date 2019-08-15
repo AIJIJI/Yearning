@@ -1,16 +1,17 @@
 import logging
 import json
 import ast
-from libs import baseview
-from libs.cryptoAES import cryptoAES
-from libs import con_database
-from core.task import grained_permissions
-from libs import util
-from rest_framework.response import Response
 from django.http import HttpResponse
 from django.db import transaction
+from rest_framework.response import Response
+
+from libs import baseview
+from libs import con_database
+from libs import util
+from libs.cryptoAES import cryptoAES
 from libs.serializers import Sqllist
 from settingConf import settings
+from core.task import grained_permissions
 from core.models import (
     DatabaseList,
     SqlRecord,
@@ -62,10 +63,12 @@ class management_db(baseview.SuperUserpermissions):
                 start = int(page) * 10 - 10
                 end = int(page) * 10
                 if con['valve']:
-                    page_number = DatabaseList.objects.filter(connection_name__contains=con['connection_name'],
-                                                              computer_room__contains=con['computer_room']).count()
-                    info = DatabaseList.objects.filter(connection_name__contains=con['connection_name'],
-                                                       computer_room__contains=con['computer_room'])[start:end]
+                    page_number = DatabaseList.objects.filter(
+                        connection_name__contains=con['connection_name'],
+                        computer_room__contains=con['computer_room']).count()
+                    info = DatabaseList.objects.filter(
+                        connection_name__contains=con['connection_name'],
+                        computer_room__contains=con['computer_room'])[start:end]
                 else:
                     page_number = DatabaseList.objects.count()
                     if page_number == 0:

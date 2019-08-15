@@ -95,7 +95,6 @@
       },
       currentPageTab (val) {
         const multiWindows = ['ddledit', 'dmledit', 'directQuery']
-        console.log({ val })
         if (val === 'login') {
           localStorage.removeItem('pageOpenedList')
           sessionStorage.clear()

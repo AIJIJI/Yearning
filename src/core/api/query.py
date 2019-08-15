@@ -1,4 +1,5 @@
 import ast
+import math
 import datetime
 import json
 from decimal import Decimal
@@ -7,9 +8,10 @@ import simplejson
 from django.http import JsonResponse, HttpResponse
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
-from core.models import DatabaseList, querypermissions, query_order, globalpermissions
+from core.models import DatabaseList, globalpermissions, QueryHistory
 from core.task import set_auth_group
 from libs import con_database, util
+from libs.serializers import QueryHistorySerializers
 import libs
 
 def exclued_db_list():
@@ -107,6 +109,35 @@ def tables(request):
     return JsonResponse({'table': children, 'highlight': highlist})
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def history(request):
+    if int(request.GET.get('all', '0')):
+        historys = QueryHistory.objects.all()
+        username = request.GET.get('user')
+        if username:
+            historys = historys.filter(user__username__icontains=username)
+        start, end = request.GET.getlist('pickers')
+        if start and end:
+            historys = historys.filter(date__gte=start, date__lte=end)
+        page = request.GET.get('page')
+        end = int(page) * 20
+        start = end - 20
+        total = historys.count()
+        return JsonResponse({
+            'data': QueryHistorySerializers(historys[start:end], many=True).data,
+            'total': total
+        })
+    else:
+        database = request.GET['database']
+        connection = DatabaseList.objects.filter(connection_name=request.GET['connection']).first()
+        historys = QueryHistory.objects.filter(
+            connection=connection,
+            database=database,
+            user=request.user)
+        return JsonResponse(QueryHistorySerializers(historys, many=True).data, safe=False)
+
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def sql(request):
@@ -115,17 +146,12 @@ def sql(request):
     sql = request.data['sql']
     check = str(sql).lower().strip().split(';\n')
     raw_sql = str(sql).strip().split(';\n')[-1]
-    user = query_order.objects.filter(
-        username=request.user).order_by('-id').first()
     un_init = util.init_conf()
     custom_com = ast.literal_eval(un_init['other'])
     critical = len(custom_com['sensitive_list'])
-
     permission_spec = set_auth_group(request.user)
     if request.data['connection'] not in permission_spec['querycon']:
         return HttpResponse('非法请求,账号无查询权限！')
-
-
     if not check[-1].startswith('s'):
         return HttpResponse('请勿使用非查询语句,请删除不必要的空白行！')
     _c = DatabaseList.objects.filter(
@@ -138,11 +164,11 @@ def sql(request):
             user=_c.username,
             port=_c.port,
             db=request.data['database']
-            ) as f:
+    ) as f:
         try:
             if libs.sql.parse(check[-1]):
                 return HttpResponse('语句中不得含有违禁关键字: update insert alter into for drop')
-            
+
             query_sql = raw_sql
             if not check[-1].startswith('show') and int(request.GET.get('with_limit', '0')):
                 if limit.get('limit').strip() == '':
@@ -151,6 +177,16 @@ def sql(request):
                     query_sql = libs.sql.replace_limit(
                         raw_sql, limit.get('limit'))
             data_set = f.search(sql=query_sql)
+            if int(request.GET.get('log', '0')):
+                log = QueryHistory(
+                    user=request.user,
+                    sql=query_sql,
+                    date=datetime.datetime.now(),
+                    count=len(data_set['data']),
+                    connection=_c,
+                    database=request.data['database']
+                    )
+                log.save()
         except Exception as e:
             return HttpResponse(e)
         else:
@@ -176,11 +212,6 @@ def sql(request):
                     for l in data_set['data']:
                         l[i] = 'blob字段为不可呈现类型'
 
-            querypermissions.objects.create(
-                work_id=user.work_id,
-                username=request.user,
-                statements=query_sql
-            )
         return JsonResponse(data_set, encoder=ResultEncoder)
 
 
