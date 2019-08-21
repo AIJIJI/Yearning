@@ -69,16 +69,21 @@ class Record(serializers.HyperlinkedModelSerializer):
         fields = ('sql', 'state', 'error', 'affectrow', 'sequence', 'execute_time')
 
 
-class Recordinfo(serializers.HyperlinkedModelSerializer):
-    '''
+class RecordSerializer(serializers.ModelSerializer):
 
-    执行记录 返回
+    connection_name = serializers.SlugRelatedField(
+        source='bundle',
+        read_only=True, slug_field='connection_name'
+    )
 
-    '''
+    computer_room = serializers.SlugRelatedField(
+        source='bundle',
+        read_only=True, slug_field='computer_room'
+    )
 
     class Meta:
         model = SqlOrder
-        fields = ('workid', 'username', 'text', 'data', 'basename', 'assigned')
+        fields = '__all__'
 
 
 class Query_review(serializers.HyperlinkedModelSerializer):

@@ -15,13 +15,16 @@
             </Select>
           </FormItem>
           <FormItem label="连接名:" prop="connection">
-            <Select v-model="input.connection" @on-change="onChangeConnection">
+            <Select
+              v-model="input.connection"
+              filterable
+              @on-change="onChangeConnection"
+            >
               <Option
                 v-for="connection in responses.optional_connections"
                 :value="connection.name"
                 :key="connection.name"
-              >{{ connection.connection_name }}
-              </Option>
+              >{{ connection.connection_name }}</Option>
             </Select>
           </FormItem>
         </Form>
@@ -59,6 +62,7 @@
       v-model="input.sql"
       @init="editorInit"
       @setCompletions="setCompletions"
+      @addShortCut="addShortCut"
     />
     <br>
     <div v-if="input.table">
@@ -76,10 +80,10 @@
       v-if="input.sql && input.cabinet && input.connection"
     >
       <nobr v-if="this.$refs.editor.editor.getCopyText()">
-        查询选中语句
+        查询选中语句 (F4)
       </nobr>
       <nobr v-else>
-        查询全部语句
+        查询全部语句 (F4)
       </nobr>
     </Button>
     <Button
@@ -256,6 +260,11 @@ export default {
     }
   },
   methods: {
+    addShortCut (editor) {
+      editor.commands.bindKey('Alt-Enter', () => this.onQuerySql(false))
+      editor.commands.bindKey('F4', () => this.onQuerySql(false))
+    },
+
     setCompletions (editor, session, pos, prefix, callback) {
       callback(null, this.wordList.map(function (word) {
         return {

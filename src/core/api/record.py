@@ -1,10 +1,10 @@
 import logging
 import json
-from libs import baseview, rollback, util
 from rest_framework.response import Response
 from django.http import HttpResponse
 from core.models import SqlOrder, SqlRecord
-from libs.serializers import Record
+from libs import baseview, rollback, util
+from libs.serializers import Record, RecordSerializer
 
 CUSTOM_ERROR = logging.getLogger('Yearning.core.views')
 
@@ -24,25 +24,26 @@ class record_order(baseview.SuperUserpermissions):
         except KeyError as e:
             CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
             return HttpResponse(status=500)
-        else:
-            try:
-                pagenumber = SqlOrder.objects.filter(status=1, assigned=request.user).count()
-                start = (int(page) - 1) * 20
-                end = int(page) * 20
-                sql = SqlOrder.objects.raw(
-                    '''
-                    select o.id,o.work_id,o.text,o.backup,o.date,o.assigned,
-                    o.username,o.real_name,o.basename,core_databaselist.connection_name, \
-                    core_databaselist.computer_room from core_sqlorder as o \
-                    INNER JOIN core_databaselist on \
-                    o.bundle_id = core_databaselist.id where o.status = 1 and o.assigned = '%s'\
-                    ORDER BY o.id desc
-                    ''' % request.user
-                )[start:end]
-                return Response({'data': util.ser(sql), 'page': pagenumber})
-            except Exception as e:
-                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                return HttpResponse(status=500)
+        records = SqlOrder.objects.filter(status=1)
+        if request.user.username != 'admin':
+            records = records.filter(assigned=request.user)
+        start = (int(page) - 1) * 20
+        end = int(page) * 20
+        
+        
+        # sql = SqlOrder.objects.raw(
+        #     '''
+        #     select o.id,o.work_id,o.text,o.backup,o.date,o.assigned,
+        #     o.username,o.real_name,o.basename,core_databaselist.connection_name, \
+        #     core_databaselist.computer_room from core_sqlorder as o \
+        #     INNER JOIN core_databaselist on \
+        #     o.bundle_id = core_databaselist.id where o.status = 1 and o.assigned = '%s'\
+        #     ORDER BY o.id desc
+        #     ''' % request.user
+        # )[start:end]
+        return Response({
+            'data': RecordSerializer(records[start:end], many=True).data,
+            'total': records.count()})
 
 
 class order_detail(baseview.BaseView):

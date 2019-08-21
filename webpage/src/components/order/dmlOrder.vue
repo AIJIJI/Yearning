@@ -42,7 +42,7 @@
           </FormItem>
 
           <FormItem label="工单说明:" prop="text">
-            <Input v-model="formItem.text" placeholder="请输入" type="textarea" rows="4"></Input>
+            <Input v-model="formItem.text" placeholder="请输入" type="textarea" :rows="4" />
           </FormItem>
 
           <FormItem label="指定审核人:" prop="assigned">
@@ -312,6 +312,7 @@
                   this.$config.err_notice(this, '无法连接到Inception!')
                 })
             } else {
+              this.loading = false
               this.$Message.error('请填写sql语句后再测试!')
             }
           }

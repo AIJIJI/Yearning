@@ -1,5 +1,5 @@
-from libs import con_database, util
 import ast
+from libs import con_database, util
 
 
 def rollbackSQL(db=None, opid=None):

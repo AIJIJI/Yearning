@@ -10,7 +10,7 @@
           <Icon type="md-send"></Icon>历史工单执行记录
         </p>
         <Row>
-          <Col span="24">
+          <i-col span="24">
             <Table
               border
               :columns="tabcolumns"
@@ -20,13 +20,13 @@
             ></Table>
             <br>
             <Page
-              :total="this.pagenumber"
+              :total="this.total"
               show-elevator
               @on-change="splicpage"
               :page-size="20"
               ref="page"
             ></Page>
-          </Col>
+          </i-col>
         </Row>
       </Card>
     </Row>
@@ -34,7 +34,7 @@
 </template>
 <script>
 import axios from 'axios'
-//
+
 export default {
   name: 'Record',
   data () {
@@ -103,14 +103,14 @@ export default {
         }
       ],
       TableDataNew: [],
-      pagenumber: 1
+      total: 1
     }
   },
   methods: {
     getrecordinfo (vl = 1) {
       axios.get(`${this.$config.url}/record?page=${vl}`)
         .then(res => {
-          [this.TableDataNew, this.pagenumber] = [res.data.data, res.data.page]
+          [this.TableDataNew, this.total] = [res.data.data, res.data.total]
         })
         .catch(error => {
           this.$config.err_notice(this, error)

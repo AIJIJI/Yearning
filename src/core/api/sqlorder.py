@@ -1,16 +1,16 @@
 import logging
 import json
 import sqlparse
-from libs import baseview, util
-from libs import call_inception
-from core.task import submit_push_messages
 from rest_framework.response import Response
 from django.http import HttpResponse
 from django.conf import settings
+from core.task import submit_push_messages
 from core.models import (
     DatabaseList,
     SqlOrder
 )
+from libs import baseview, util
+from libs import call_inception
 
 CUSTOM_ERROR = logging.getLogger('Yearning.core.views')
 
@@ -70,6 +70,7 @@ class sqlorder(baseview.BaseView):
                     'port': data.port
                 }
             except KeyError as e:
+                print(73, e)
                 CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
             else:
                 try:
@@ -77,6 +78,8 @@ class sqlorder(baseview.BaseView):
                         res = test.Check(sql=sql)
                         return Response({'result': res, 'status': 200})
                 except Exception as e:
+                    from traceback import format_exc
+                    print(81, e.__dict__, format_exc())
                     CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
                     return HttpResponse(e)
 
@@ -90,38 +93,38 @@ class sqlorder(baseview.BaseView):
         except KeyError as e:
             CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
             return HttpResponse(status=500)
-        else:
-            try:
-                x = [x for x in sqlparse.split(tmp)]
-                if str(x[0]).lstrip().startswith('use'):
-                    del x[0]
-                sql = ''.join(x)
-                sql = sql.strip(' ').rstrip(';')
-                workId = util.workId()
-                SqlOrder.objects.get_or_create(
-                    username=request.user,
-                    date=util.date(),
-                    work_id=workId,
-                    status=2,
-                    basename=data['basename'],
-                    sql=sql,
-                    type=type,
-                    text=data['text'],
-                    backup=data['backup'],
-                    bundle_id=id,
-                    assigned=data['assigned'],
-                    delay=data['delay'],
-                    real_name=real_name
-                )
-                submit_push_messages(
-                    workId=workId,
-                    user=request.user,
-                    addr_ip=addr_ip,
-                    text=data['text'],
-                    assigned=data['assigned'],
-                    id=id
-                ).start()
-                return Response('已提交，请等待管理员审核!')
-            except Exception as e:
-                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                return HttpResponse(status=500)
+        try:
+            x = [x for x in sqlparse.split(tmp)]
+            if str(x[0]).lstrip().startswith('use'):
+                del x[0]
+            sql = ''.join(x)
+            sql = sql.strip(' ').rstrip(';')
+            workId = util.workId()
+            SqlOrder.objects.get_or_create(
+                username=request.user,
+                date=util.date(),
+                work_id=workId,
+                status=2,
+                basename=data['basename'],
+                sql=sql,
+                type=type,
+                text=data['text'],
+                backup=data['backup'],
+                bundle_id=id,
+                assigned=data['assigned'],
+                delay=data['delay'],
+                real_name=real_name
+            )
+            submit_push_messages(
+                workId=workId,
+                user=request.user,
+                addr_ip=addr_ip,
+                text=data['text'],
+                assigned=data['assigned'],
+                id=id
+            ).start()
+            return Response('已提交，请等待管理员审核!')
+        except Exception as e:
+            print(e)
+            CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+            return HttpResponse(status=500)

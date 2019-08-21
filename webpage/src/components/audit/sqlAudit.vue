@@ -58,15 +58,6 @@
           <Col span="24">
             <Form inline>
               <FormItem>
-                <Poptip
-                  confirm
-                  title="您确认删除这些工单信息吗?"
-                  @on-ok="delrecordData"
-                >
-                  <!-- <Button type="warning">删除记录</Button> -->
-                </Poptip>
-              </FormItem>
-              <FormItem>
                 <Poptip trigger="hover" title="提示" content="此开关用于打开实时表格数据更新功能">
                   <i-switch v-model="valve" @on-change="refreshForm" size="large">
                     <span slot="open">打开</span>
@@ -75,7 +66,7 @@
                 </Poptip>
               </FormItem>
               <FormItem>
-                <Input placeholder="账号名" v-model="find.user"></Input>
+                <Input placeholder="账号名" v-model="find.user" />
               </FormItem>
               <FormItem>
                 <DatePicker format="yyyy-MM-dd HH:mm" type="datetimerange" placeholder="请选择查询的时间范围"
@@ -476,6 +467,7 @@
             }
           })
           .catch(error => {
+            this.loading = false
             this.$config.err_notice(this, error)
           })
       },
@@ -597,4 +589,3 @@
     }
   }
 </script>
-<!-- remove delete request -->

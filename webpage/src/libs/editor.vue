@@ -61,6 +61,7 @@
         vm.$emit('input', content)
         vm.contentBackup = content
       })
+      this.$emit('addShortCut', editor)
     }
   }
 </script>

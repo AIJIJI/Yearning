@@ -4,9 +4,10 @@ import ast
 import threading
 import datetime
 import sqlparse
-from libs import baseview, call_inception, util, serializers, send_email
-from rest_framework.response import Response
 from django.http import HttpResponse
+from django.conf import settings
+from rest_framework.response import Response
+from libs import baseview, call_inception, util, serializers, send_email
 from core.models import (
     SqlOrder,
     DatabaseList,
@@ -124,109 +125,115 @@ class audit(baseview.SuperUserpermissions):
         :return 提交结果信息
 
         '''
+        category = request.data.get('type', 0)
+        if category == 0:
+            try:
+                to_user = request.data['to_user']
+                text = request.data['text']
+                order_id = request.data['id']
+            except KeyError as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+                return HttpResponse(status=500)
+            try:
+                SqlOrder.objects.filter(id=order_id).update(
+                    status=0, rejected=text)
+                _tmpData = SqlOrder.objects.filter(id=order_id).values(
+                    'work_id',
+                    'bundle_id'
+                ).first()
+                reject = rejected_push_messages(_tmpData, to_user, addr_ip, text, request.user)
+                threading.Timer(0, reject.execute).start()
+                return Response('操作成功，该请求已驳回！')
+            except Exception as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+                return HttpResponse(status=500)
 
-        try:
-            category = request.data['type']
-        except KeyError as e:
-            CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-        else:
-            if category == 0:
-                try:
-                    to_user = request.data['to_user']
-                    text = request.data['text']
-                    order_id = request.data['id']
-                except KeyError as e:
-                    CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                    return HttpResponse(status=500)
+        elif category == 1:
+            try:
+                from_user = request.user
+                to_user = request.data['to_user']
+                order_id = request.data['id']
+            except KeyError as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+                return HttpResponse(status=500)
+            try:
+                idempotent = SqlOrder.objects.filter(
+                    id=order_id).first()
+                if idempotent.status != 2:
+                    return Response('非法传参，触发幂等操作')
                 else:
-                    try:
-                        SqlOrder.objects.filter(id=order_id).update(
-                            status=0, rejected=text)
-                        _tmpData = SqlOrder.objects.filter(id=order_id).values(
-                            'work_id',
-                            'bundle_id'
-                        ).first()
-                        reject = rejected_push_messages(_tmpData, to_user, addr_ip, text, request.user)
-                        threading.Timer(0, reject.execute).start()
-                        return Response('操作成功，该请求已驳回！')
-                    except Exception as e:
-                        CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                        return HttpResponse(status=500)
-
-            elif category == 1:
-                try:
-                    from_user = request.user
-                    to_user = request.data['to_user']
-                    order_id = request.data['id']
-                except KeyError as e:
-                    CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                    return HttpResponse(status=500)
-                else:
-                    try:
-                        idempotent = SqlOrder.objects.filter(
-                            id=order_id).first()
-                        if idempotent.status != 2:
-                            return Response('非法传参，触发幂等操作')
-                        else:
-                            delay = 0
-                            if str(idempotent.delay).rstrip() != '':
-                                now_time = datetime.datetime.now()
-                                next_time = datetime.datetime.strptime(idempotent.delay, "%Y-%m-%d %H:%M")
-                                if now_time > next_time:
-                                    return Response('工单定时执行时间不得小于当前时间！！！')
-                                delay = int((next_time - now_time).total_seconds())
-                            SqlOrder.objects.filter(
-                                id=order_id).update(status=3)
-                            arr = order_push_message(addr_ip, order_id, from_user, to_user)
-                            threading.Timer(delay, arr.run).start()
-                            return Response('工单执行成功!请通过记录页面查看具体执行结果')
-                    except Exception as e:
-                        CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                        return HttpResponse(status=500)
-            elif category == 2:
-                try:
-                    perform = request.data['perform']
-                    work_id = request.data['work_id']
-                    username = request.data['username']
-                except KeyError as e:
-                    CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                    return HttpResponse(status=500)
-                else:
-                    mail = Account.objects.filter(username=perform).first()
+                    delay = 0
+                    if str(idempotent.delay).rstrip() != '':
+                        now_time = datetime.datetime.now()
+                        next_time = datetime.datetime.strptime(idempotent.delay, "%Y-%m-%d %H:%M")
+                        if now_time > next_time:
+                            return Response('工单定时执行时间不得小于当前时间！！！')
+                        delay = int((next_time - now_time).total_seconds())
                     SqlOrder.objects.filter(
-                        work_id=work_id).update(executor=perform)
-                    threading.Thread(target=push_message, args=(
-                        {'to_user': username, 'workid': work_id, 'addr': addr_ip}, 9, request.user, mail.email, work_id,
-                        '已提交执行人')).start()
-                    return Response('工单已提交执行人！')
+                        id=order_id).update(status=3)
+                    arr = order_push_message(addr_ip, order_id, from_user, to_user)
+                    threading.Timer(delay, arr.run).start()
+                    return Response('工单执行成功!请通过记录页面查看具体执行结果')
+            except Exception as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+                return HttpResponse(status=500)
+        elif category == 2:
+            try:
+                perform = request.data['perform']
+                work_id = request.data['work_id']
+                username = request.data['username']
+            except KeyError as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+                return HttpResponse(status=500)
+            else:
+                mail = Account.objects.filter(username=perform).first()
+                SqlOrder.objects.filter(
+                    work_id=work_id).update(executor=perform)
+                threading.Thread(target=push_message, args=(
+                    {'to_user': username, 'workid': work_id, 'addr': addr_ip}, 9, request.user, mail.email, work_id,
+                    '已提交执行人')).start()
+                return Response('工单已提交执行人！')
 
-            elif category == 'test':
+        elif category == 'test':
+            try:
+                base = request.data['base']
+                order_id = request.data['id']
+            except KeyError as e:
+                CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
+                return HttpResponse(status=500)
+            else:
+                sql = SqlOrder.objects.filter(id=order_id).first()
+                if not sql.sql:
+                    return Response({'status': '工单内无sql语句!'})
+                data = DatabaseList.objects.filter(
+                    id=sql.bundle_id).first()
+                info = {
+                    'host': data.ip,
+                    'user': data.username,
+                    'password': data.password,
+                    'db': base,
+                    'port': data.port
+                }
+                if settings.DEBUG:
+                    return Response({'result':  [
+                        {
+                            'ID': 1,
+                            'stage': 0,
+                            'errlevel': 0,
+                            'stagestatus': 0,
+                            'errormessage': 0,
+                            'sql': 1,
+                            'affected_rows': 1,
+                            'SQLSHA1': 1
+                        }
+                    ], 'status': 200})
                 try:
-                    base = request.data['base']
-                    order_id = request.data['id']
-                except KeyError as e:
+                    with call_inception.Inception(LoginDic=info) as test:
+                        res = test.Check(sql=sql.sql)
+                        return Response({'result': res, 'status': 200})
+                except Exception as e:
                     CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                    return HttpResponse(status=500)
-                else:
-                    sql = SqlOrder.objects.filter(id=order_id).first()
-                    if not sql.sql:
-                        return Response({'status': '工单内无sql语句!'})
-                    data = DatabaseList.objects.filter(
-                        id=sql.bundle_id).first()
-                    info = {
-                        'host': data.ip,
-                        'user': data.username,
-                        'password': data.password,
-                        'db': base,
-                        'port': data.port
-                    }
-                    try:
-                        with call_inception.Inception(LoginDic=info) as test:
-                            res = test.Check(sql=sql.sql)
-                            return Response({'result': res, 'status': 200})
-                    except Exception as e:
-                        CUSTOM_ERROR.error(f'{e.__class__.__name__}: {e}')
-                        return Response({'status': '请检查inception信息是否正确!'})
+                    return Response({'status': str(e)})
 
 
 class del_order(baseview.BaseView):

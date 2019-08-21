@@ -107,6 +107,7 @@ class Inception(object):
 
     def Check(self, sql=None):
         Inceptionsql = self.GenerateStatements(Sql=sql, Type='--enable-check')
+        print(Inceptionsql)
         with self.con.cursor() as cursor:
             cursor.execute(Inceptionsql)
             result = cursor.fetchall()
