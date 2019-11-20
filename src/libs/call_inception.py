@@ -109,6 +109,7 @@ class Inception(object):
         Inceptionsql = self.GenerateStatements(Sql=sql, Type='--enable-check')
         print(Inceptionsql)
         with self.con.cursor() as cursor:
+            # cursor._defer_warnings = True
             cursor.execute(Inceptionsql)
             result = cursor.fetchall()
             Dataset = [
